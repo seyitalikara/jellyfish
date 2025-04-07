@@ -1,2 +1,2 @@
 # jellyfish
-sosyal etkileşim
+sosyal etkileşim amacıyla yapılmıştır.
