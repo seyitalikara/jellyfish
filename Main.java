@@ -1,71 +1,69 @@
-package jellyfish;
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.*;
 
-public class Main {
-    private static Color[] colors = {Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE, Color.MAGENTA};
-    private static int colorIndex = 0;
+public class Main extends JFrame {
+    private JButton[] buttons = new JButton[6];
+    private JFrame[] windows = new JFrame[6];
+    private String[] buttonNames = {
+        "Hello Penceresi",
+        "Checklist Penceresi",
+        "Hesap Makinesi",
+        "Not Defteri",
+        "Renk Seçici",
+        "Zamanlayıcı"
+    };
 
-    public static void main(String[] args) {
-        // Ana pencereyi oluştur
-        JFrame frame = new JFrame("Hello World Uygulaması");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(300, 200);
-        frame.setLayout(new FlowLayout());
+    private void openWindow(JFrame window, int index) {
+        if (window != null) {
+            window.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    setEnabled(true);
+                    windows[index] = null;
+                }
+            });
+            setEnabled(false);
+            window.setVisible(true);
+        }
+    }
 
-        // Etiketi oluştur
-        JLabel label = new JLabel("Hello World!");
-        label.setFont(new Font("Arial", Font.BOLD, 24));
-
-        // Renk değiştirme butonu
-        JButton colorButton = new JButton("Rengi Değiştir");
-        colorButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                label.setForeground(colors[colorIndex]);
-                colorIndex = (colorIndex + 1) % colors.length;
-            }
-        });
-
-        // Yeni metin girişi butonu
-        JButton textButton = new JButton("Metin Gir");
-        textButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                // Yeni pencere oluştur
-                JDialog dialog = new JDialog(frame, "Metin Girişi", true);
-                dialog.setLayout(new FlowLayout());
-                dialog.setSize(250, 150);
-                dialog.setLocationRelativeTo(frame);
-
-                // Metin kutusu oluştur
-                JTextField textField = new JTextField(20);
-                
-                // Tamam butonu oluştur
-                JButton okButton = new JButton("Tamam");
-                okButton.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        // Ana etiketi güncelle ve pencereyi kapat
-                        label.setText(textField.getText());
-                        dialog.dispose();
+    public Main() {
+        setTitle("Ana Pencere");
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        
+        JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        for (int i = 0; i < 6; i++) {
+            final int index = i;
+            buttons[i] = new JButton(buttonNames[i]);
+            buttons[i].addActionListener(e -> {
+                if (windows[index] == null) {
+                    switch (index) {
+                        case 0: windows[index] = new HelloWindow(); break;
+                        case 1: windows[index] = new ChecklistWindow(); break;
+                        case 2: windows[index] = new CalculatorWindow(); break;
+                        case 3: windows[index] = new NotesWindow(); break;
+                        case 4: windows[index] = new ColorPickerWindow(); break;
+                        case 5: windows[index] = new TimerWindow(); break;
                     }
-                });
-
-                // Bileşenleri dialog penceresine ekle
-                dialog.add(textField);
-                dialog.add(okButton);
-                
-                // Dialog penceresini görünür yap
-                dialog.setVisible(true);
-            }
+                    openWindow(windows[index], index);
+                }
+            });
+            buttonPanel.add(buttons[i]);
+        }
+        
+        setLayout(new BorderLayout());
+        add(buttonPanel, BorderLayout.CENTER);
+    }
+    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            Main main = new Main();
+            main.setVisible(true);
         });
-
-        // Bileşenleri ana pencereye ekle
-        frame.add(label);
-        frame.add(colorButton);
-        frame.add(textButton);
-
-        // Ana pencereyi görünür yap
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
     }
 }
