@@ -3,15 +3,16 @@ import java.awt.event.*;
 import javax.swing.*;
 
 public class Main extends JFrame {
-    private JButton[] buttons = new JButton[6];
-    private JFrame[] windows = new JFrame[6];
+    private JButton[] buttons = new JButton[7];
+    private JFrame[] windows = new JFrame[7];
     private String[] buttonNames = {
         "Hello Penceresi",
         "Checklist Penceresi",
         "Hesap Makinesi",
         "Not Defteri",
         "Renk Seçici",
-        "Zamanlayıcı"
+        "Zamanlayıcı",
+        "Mesaj Penceresi"
     };
 
     private void openWindow(JFrame window, int index) {
@@ -34,10 +35,10 @@ public class Main extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
-        JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        JPanel buttonPanel = new JPanel(new GridLayout(4, 2, 10, 10));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 7; i++) {
             final int index = i;
             buttons[i] = new JButton(buttonNames[i]);
             buttons[i].addActionListener(e -> {
@@ -49,6 +50,7 @@ public class Main extends JFrame {
                         case 3: windows[index] = new NotesWindow(); break;
                         case 4: windows[index] = new ColorPickerWindow(); break;
                         case 5: windows[index] = new TimerWindow(); break;
+                        case 6: windows[index] = new MessageWindow(); break;
                     }
                     openWindow(windows[index], index);
                 }
