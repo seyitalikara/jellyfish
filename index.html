@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JellyFish — Görev Yönetimi</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:'Segoe UI',system-ui,sans-serif}
+    ::-webkit-scrollbar{width:6px;height:6px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+    .kanban-col{min-height:400px}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+    .slide-in{animation:slideIn 0.25s ease}
+    .fade-in{animation:fadeIn 0.2s ease}
+    .blink{animation:blink 1.5s infinite}
+    .sidebar-item.active{background:rgba(255,255,255,0.12)}
+    .priority-low{background:#e2e8f0;color:#475569}
+    .priority-medium{background:#fef9c3;color:#854d0e}
+    .priority-high{background:#fed7aa;color:#9a3412}
+    .priority-critical{background:#fee2e2;color:#991b1b}
+    .status-todo{background:#f1f5f9;color:#64748b}
+    .status-inprogress{background:#dbeafe;color:#1e40af}
+    .status-done{background:#dcfce7;color:#166534}
+    .status-blocked{background:#fee2e2;color:#991b1b}
+    .notif-dot{width:8px;height:8px;background:#ef4444;border-radius:50%}
+    input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset:0}
+    .team-bar{width:4px;border-radius:2px;flex-shrink:0}
+    .modal-overlay{background:rgba(0,0,0,0.5);backdrop-filter:blur(2px)}
+    .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 overflow-hidden h-screen">
+
+<!-- EKRAN: FIREBASE KURULUM -->
+<div id="screen-setup" class="hidden fixed inset-0 bg-white z-50 flex items-center justify-center p-6">
+  <div class="max-w-xl w-full">
+    <div class="text-center mb-8">
+      <div class="text-5xl mb-3">🪼</div>
+      <h1 class="text-2xl font-bold text-slate-800">Firebase Kurulumu</h1>
+      <p class="text-slate-500 mt-2">Çoklu cihaz desteği için ücretsiz Firebase hesabı bağlayın.</p>
+    </div>
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6 text-sm text-blue-800">
+      <p class="font-semibold mb-2"><i class="fas fa-info-circle mr-1"></i> Nasıl Yapılır?</p>
+      <ol class="list-decimal ml-5 space-y-1">
+        <li><a href="https://console.firebase.google.com" target="_blank" class="underline font-medium">console.firebase.google.com</a> adresine gidin</li>
+        <li>"Add project" ile yeni proje oluşturun</li>
+        <li>Realtime Database → "Create database" → "Locked mode" seçin, Rules sekmesine <b>database.rules.json</b> içeriğini yapıştırın</li>
+        <li>Authentication → Sign-in method → <b>Anonymous</b> girişini etkinleştirin</li>
+        <li>Project Settings → "Web app" ekleyin → config kopyalayın</li>
+        <li>Aşağıdaki alanlara yapıştırın ve kaydedin</li>
+      </ol>
+    </div>
+    <div class="space-y-3 mb-6">
+      <input id="setup-apiKey" placeholder="apiKey" class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-mono">
+      <input id="setup-authDomain" placeholder="authDomain (xxx.firebaseapp.com)" class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-mono">
+      <input id="setup-databaseURL" placeholder="databaseURL (https://xxx-default-rtdb.firebaseio.com)" class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-mono">
+      <input id="setup-projectId" placeholder="projectId" class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-mono">
+      <input id="setup-appId" placeholder="appId" class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-mono">
+    </div>
+    <button onclick="saveFirebaseConfig()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition">
+      <i class="fas fa-plug mr-2"></i> Firebase'i Bağla ve Kaydet
+    </button>
+    <p class="text-center text-xs text-slate-400 mt-4">Config bilgileri bu tarayıcıya kaydedilir. Kalıcı çözüm: index.html içindeki EMBEDDED_CONFIG bölümünü doldurun.</p>
+  </div>
+</div>
+
+<!-- EKRAN: GİRİŞ -->
+<div id="screen-login" class="fixed inset-0 flex items-center justify-center" style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%)">
+  <div class="absolute inset-0 opacity-10">
+    <svg width="100%" height="100%"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#grid)"/></svg>
+  </div>
+  <div class="relative w-full max-w-md mx-4">
+    <div class="text-center mb-8">
+      <div class="text-6xl mb-3">🪼</div>
+      <h1 class="text-3xl font-bold text-white">JellyFish</h1>
+      <p class="text-slate-400 mt-1">Takım Görev Yönetimi</p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div class="flex border-b border-slate-100">
+        <button onclick="setLoginTab('admin')" id="tab-admin" class="flex-1 py-4 text-sm font-semibold text-blue-600 border-b-2 border-blue-600">
+          <i class="fas fa-user-shield mr-2"></i>Danışman
+        </button>
+        <button onclick="setLoginTab('member')" id="tab-member" class="flex-1 py-4 text-sm font-semibold text-slate-400 border-b-2 border-transparent">
+          <i class="fas fa-users mr-2"></i>Takım Üyesi
+        </button>
+      </div>
+      <div class="p-6">
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Kulüp Kodu</label>
+          <input id="login-club-code" type="text" placeholder="Örn: JELLYFISH2025" class="w-full border border-slate-200 rounded-xl px-4 py-3 font-mono uppercase text-sm tracking-widest" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div id="admin-fields">
+          <div class="mb-4">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Danışman Şifresi</label>
+            <input id="login-admin-pass" type="password" placeholder="••••••••" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
+          </div>
+        </div>
+        <div id="member-fields" class="hidden">
+          <div class="mb-4">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Adın Soyadın</label>
+            <input id="login-member-name" type="text" placeholder="Ali Yılmaz" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
+          </div>
+          <div class="mb-4">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Uzmanlık Alanı</label>
+            <select id="login-member-role" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm bg-white">
+              <option value="Yazılım">💻 Yazılım</option>
+              <option value="Elektronik">⚡ Elektronik</option>
+              <option value="Mekanik">⚙️ Mekanik</option>
+              <option value="Tasarım">🎨 Tasarım</option>
+              <option value="İş Geliştirme">📊 İş Geliştirme</option>
+              <option value="Diğer">🔧 Diğer</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Takım</label>
+            <select id="login-team-select" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm bg-white">
+              <option value="">-- Kulüp kodunu girin --</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="handleLogin()" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition text-sm">
+          <i class="fas fa-arrow-right-to-bracket mr-2"></i><span id="btn-login-text">Danışman Olarak Gir</span>
+        </button>
+        <p id="login-error" class="text-center text-red-500 text-xs mt-3 hidden"></p>
+      </div>
+    </div>
+    <p class="text-center mt-4" id="setup-link-wrap">
+      <button onclick="showScreen('screen-setup')" class="text-xs text-slate-400 hover:text-white transition underline">Firebase ayarlarını değiştir</button>
+    </p>
+  </div>
+</div>
+
+<!-- EKRAN: UYGULAMA -->
+<div id="screen-app" class="hidden flex h-screen">
+
+  <!-- SIDEBAR -->
+  <div class="w-60 bg-slate-900 flex flex-col text-white flex-shrink-0 select-none">
+    <div class="px-5 py-4 border-b border-slate-700/50">
+      <div class="flex items-center gap-2.5">
+        <span class="text-2xl">🪼</span>
+        <div>
+          <div class="font-bold text-sm">JellyFish</div>
+          <div id="sidebar-club-name" class="text-xs text-slate-400">Kulüp</div>
+        </div>
+      </div>
+    </div>
+    <div class="px-5 py-3 border-b border-slate-700/50">
+      <div class="flex items-center gap-2.5">
+        <div id="sidebar-avatar" class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold flex-shrink-0">A</div>
+        <div class="overflow-hidden">
+          <div id="sidebar-user-name" class="text-sm font-medium truncate">Kullanıcı</div>
+          <div id="sidebar-user-role" class="text-xs text-slate-400 truncate">Rol</div>
+        </div>
+      </div>
+    </div>
+    <nav class="flex-1 overflow-y-auto py-3 px-3">
+      <div id="nav-admin" class="hidden mb-1">
+        <button onclick="showAdminDashboard()" id="nav-btn-dashboard" class="sidebar-item w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-white/10 transition mb-1">
+          <i class="fas fa-th-large w-4 text-center"></i> Genel Bakış
+        </button>
+      </div>
+      <div class="mb-1">
+        <div class="flex items-center justify-between px-3 mb-1">
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Takımlar</span>
+          <button id="btn-add-team" onclick="openCreateTeamModal()" class="hidden text-slate-500 hover:text-white transition text-xs"><i class="fas fa-plus"></i></button>
+        </div>
+        <div id="nav-teams"></div>
+      </div>
+    </nav>
+    <div class="border-t border-slate-700/50 px-3 py-3 flex items-center gap-1">
+      <button onclick="openNotifPanel()" class="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition text-sm relative">
+        <i class="fas fa-bell"></i><span class="text-xs">Bildirimler</span>
+        <span id="notif-badge" class="hidden absolute top-1 left-5 w-4 h-4 bg-red-500 rounded-full text-white text-xs items-center justify-center font-bold"></span>
+      </button>
+      <button onclick="handleLogout()" class="px-3 py-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-white/10 transition text-sm" title="Çıkış">
+        <i class="fas fa-right-from-bracket"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="bg-white border-b border-slate-100 px-6 py-3.5 flex items-center justify-between flex-shrink-0">
+      <div>
+        <h2 id="topbar-title" class="text-lg font-bold text-slate-800">Genel Bakış</h2>
+        <p id="topbar-sub" class="text-xs text-slate-400"></p>
+      </div>
+      <div class="flex items-center gap-3">
+        <select id="filter-assignee" class="hidden border border-slate-200 rounded-lg px-3 py-1.5 text-sm bg-white text-slate-600"></select>
+        <button id="btn-add-task" onclick="openCreateTaskModal()" class="hidden bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+          <i class="fas fa-plus"></i> Görev Ekle
+        </button>
+        <button id="btn-add-member" onclick="openAddMemberModal()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+          <i class="fas fa-user-plus"></i> Üye Ekle
+        </button>
+      </div>
+    </div>
+    <div id="content" class="flex-1 overflow-auto p-6">
+      <div id="view-admin" class="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="admin-teams-grid"></div>
+      </div>
+      <div id="view-team" class="hidden">
+        <div class="flex gap-4 mb-5" id="team-stats"></div>
+        <div class="grid grid-cols-4 gap-4">
+          <div>
+            <div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span><span class="text-sm font-semibold text-slate-600">Yapılacak</span><span id="count-todo" class="ml-auto bg-slate-200 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full"></span></div>
+            <div id="col-todo" class="kanban-col space-y-2.5"></div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span><span class="text-sm font-semibold text-slate-600">Devam Ediyor</span><span id="count-inprogress" class="ml-auto bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full"></span></div>
+            <div id="col-inprogress" class="kanban-col space-y-2.5"></div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-red-400"></span><span class="text-sm font-semibold text-slate-600">Bekliyor</span><span id="count-blocked" class="ml-auto bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full"></span></div>
+            <div id="col-blocked" class="kanban-col space-y-2.5"></div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-green-500"></span><span class="text-sm font-semibold text-slate-600">Tamamlandı</span><span id="count-done" class="ml-auto bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full"></span></div>
+            <div id="col-done" class="kanban-col space-y-2.5"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: TAKIM OLUŞTUR -->
+<div id="modal-create-team" class="hidden fixed inset-0 modal-overlay z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl fade-in">
+    <div class="flex items-center justify-between p-5 border-b border-slate-100">
+      <h3 class="font-bold text-slate-800">Yeni Takım Oluştur</h3>
+      <button onclick="closeModal('modal-create-team')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 space-y-4">
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Takım Adı *</label>
+        <input id="team-name" placeholder="Teknofest 2025" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm"></div>
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Açıklama</label>
+        <input id="team-desc" placeholder="İnsansız hava aracı takımı" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm"></div>
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Renk</label>
+        <div class="flex gap-2 flex-wrap" id="color-picker">
+          <div onclick="selectTeamColor('#3b82f6')" class="color-opt w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow ring-2 ring-blue-500 ring-offset-2" style="background:#3b82f6" data-color="#3b82f6"></div>
+          <div onclick="selectTeamColor('#8b5cf6')" class="color-opt w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow" style="background:#8b5cf6" data-color="#8b5cf6"></div>
+          <div onclick="selectTeamColor('#ec4899')" class="color-opt w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow" style="background:#ec4899" data-color="#ec4899"></div>
+          <div onclick="selectTeamColor('#f59e0b')" class="color-opt w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow" style="background:#f59e0b" data-color="#f59e0b"></div>
+          <div onclick="selectTeamColor('#10b981')" class="color-opt w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow" style="background:#10b981" data-color="#10b981"></div>
+          <div onclick="selectTeamColor('#ef4444')" class="color-opt w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow" style="background:#ef4444" data-color="#ef4444"></div>
+          <div onclick="selectTeamColor('#06b6d4')" class="color-opt w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow" style="background:#06b6d4" data-color="#06b6d4"></div>
+          <div onclick="selectTeamColor('#84cc16')" class="color-opt w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow" style="background:#84cc16" data-color="#84cc16"></div>
+        </div>
+        <input type="hidden" id="team-color" value="#3b82f6">
+      </div>
+    </div>
+    <div class="p-5 pt-0 flex gap-3">
+      <button onclick="closeModal('modal-create-team')" class="flex-1 border border-slate-200 rounded-xl py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition">İptal</button>
+      <button onclick="submitCreateTeam()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2.5 text-sm font-semibold transition">Takımı Oluştur</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ÜYE EKLE -->
+<div id="modal-add-member" class="hidden fixed inset-0 modal-overlay z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl fade-in">
+    <div class="flex items-center justify-between p-5 border-b border-slate-100">
+      <h3 class="font-bold text-slate-800">Takıma Üye Ekle</h3>
+      <button onclick="closeModal('modal-add-member')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 space-y-4">
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Ad Soyad *</label>
+        <input id="member-name" placeholder="Ali Yılmaz" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm"></div>
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Uzmanlık Alanı *</label>
+        <select id="member-role" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white">
+          <option value="Yazılım">💻 Yazılım</option>
+          <option value="Elektronik">⚡ Elektronik</option>
+          <option value="Mekanik">⚙️ Mekanik</option>
+          <option value="Tasarım">🎨 Tasarım</option>
+          <option value="İş Geliştirme">📊 İş Geliştirme</option>
+          <option value="Diğer">🔧 Diğer</option>
+        </select></div>
+    </div>
+    <div class="p-5 pt-0 flex gap-3">
+      <button onclick="closeModal('modal-add-member')" class="flex-1 border border-slate-200 rounded-xl py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition">İptal</button>
+      <button onclick="submitAddMember()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2.5 text-sm font-semibold transition">Ekle</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: GÖREV OLUŞTUR/DÜZENLE -->
+<div id="modal-task" class="hidden fixed inset-0 modal-overlay z-40 flex items-center justify-center p-4 overflow-y-auto">
+  <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl fade-in my-auto">
+    <div class="flex items-center justify-between p-5 border-b border-slate-100">
+      <h3 id="modal-task-title" class="font-bold text-slate-800">Yeni Görev</h3>
+      <button onclick="closeModal('modal-task')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 space-y-4">
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Görev Başlığı *</label>
+        <input id="task-title" placeholder="Devre şeması çizimi" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm"></div>
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Açıklama</label>
+        <textarea id="task-desc" rows="2" placeholder="Görevin detayları..." class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm resize-none"></textarea></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Atanan Kişi</label>
+          <select id="task-assignee" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
+            <option value="">Atanmadı</option></select></div>
+        <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Öncelik</label>
+          <select id="task-priority" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
+            <option value="low">🟢 Düşük</option>
+            <option value="medium" selected>🟡 Orta</option>
+            <option value="high">🟠 Yüksek</option>
+            <option value="critical">🔴 Kritik</option>
+          </select></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Son Tarih</label>
+          <input type="date" id="task-deadline" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></div>
+        <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Durum</label>
+          <select id="task-status" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
+            <option value="todo">⬜ Yapılacak</option>
+            <option value="inprogress">🔵 Devam Ediyor</option>
+            <option value="blocked">🔴 Bekliyor</option>
+            <option value="done">✅ Tamamlandı</option>
+          </select></div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Bu görev bitince bildirim gönder →</label>
+        <p class="text-xs text-slate-400 mb-2">Başka bir takımın görevi/üyesi bu göreve bağımlıysa, biten görev onları uyarır.</p>
+        <div id="dep-list" class="space-y-2 mb-2"></div>
+        <div class="flex gap-2">
+          <select id="dep-team-select" class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-xs bg-white">
+            <option value="">Takım seçin...</option>
+          </select>
+          <select id="dep-task-select" class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-xs bg-white">
+            <option value="">Görev seçin...</option>
+          </select>
+          <button onclick="addDependency()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-lg text-xs transition"><i class="fas fa-plus"></i></button>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">Örnek: Mekanik çizimi → Elektronik takımına bildirim gider.</p>
+      </div>
+      <input type="hidden" id="task-id-edit">
+    </div>
+    <div class="p-5 pt-0 flex gap-3">
+      <button onclick="closeModal('modal-task')" class="flex-1 border border-slate-200 rounded-xl py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition">İptal</button>
+      <button onclick="submitTask()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2.5 text-sm font-semibold transition">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: GÖREV DETAY -->
+<div id="modal-detail" class="hidden fixed inset-0 modal-overlay z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl fade-in">
+    <div class="flex items-center justify-between p-5 border-b border-slate-100">
+      <h3 id="detail-title" class="font-bold text-slate-800 text-lg flex-1 pr-4"></h3>
+      <button onclick="closeModal('modal-detail')" class="text-slate-400 hover:text-slate-600 flex-shrink-0"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 space-y-3 overflow-y-auto max-h-96">
+      <div id="detail-badges" class="flex flex-wrap gap-2"></div>
+      <p id="detail-desc" class="text-sm text-slate-600 leading-relaxed"></p>
+      <div id="detail-meta" class="space-y-2 text-sm"></div>
+      <div id="detail-deps" class="hidden">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Bağımlılıklar (bitince bildirim gider):</p>
+        <div id="detail-deps-list" class="space-y-1"></div>
+      </div>
+      <div id="detail-history" class="hidden">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Paslanma Geçmişi:</p>
+        <div id="detail-history-list" class="space-y-2"></div>
+      </div>
+    </div>
+    <div class="p-5 pt-3 border-t border-slate-100">
+      <div class="flex flex-wrap gap-2" id="detail-actions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: GÖREVI PASLA -->
+<div id="modal-pass" class="hidden fixed inset-0 modal-overlay z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl fade-in">
+    <div class="flex items-center justify-between p-5 border-b border-slate-100">
+      <h3 class="font-bold text-slate-800">Görevi Pasla</h3>
+      <button onclick="closeModal('modal-pass')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 space-y-4">
+      <p class="text-sm text-slate-500">Görevi devrettiğinde, yeni atanan kişiye bildirim gönderilir.</p>
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Devredilecek Kişi</label>
+        <select id="pass-to" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white">
+          <option value="">Kişi seçin...</option>
+        </select></div>
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Not (isteğe bağlı)</label>
+        <textarea id="pass-note" rows="2" placeholder="Hastalık, tatil, öncelik değişimi..." class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm resize-none"></textarea></div>
+      <input type="hidden" id="pass-task-id">
+      <input type="hidden" id="pass-team-id">
+    </div>
+    <div class="p-5 pt-0 flex gap-3">
+      <button onclick="closeModal('modal-pass')" class="flex-1 border border-slate-200 rounded-xl py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition">İptal</button>
+      <button onclick="submitPass()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2.5 text-sm font-semibold transition"><i class="fas fa-share mr-1"></i> Pasla</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL: BİLDİRİMLER -->
+<div id="panel-notif" class="hidden fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 flex flex-col slide-in">
+  <div class="flex items-center justify-between p-5 border-b border-slate-100">
+    <h3 class="font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-bell text-blue-500"></i> Bildirimler</h3>
+    <div class="flex items-center gap-2">
+      <button onclick="markAllNotifsRead()" class="text-xs text-blue-500 hover:underline">Tümünü okundu say</button>
+      <button onclick="closeNotifPanel()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+  <div id="notif-list" class="flex-1 overflow-y-auto p-4 space-y-2">
+    <p class="text-center text-slate-400 text-sm pt-8">Bildirim yok</p>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container" class="fixed bottom-5 right-5 flex flex-col gap-2 z-[60] pointer-events-none"></div>
+
+<script>
+// ============================================================
+// FIREBASE YAPILANDIRMASI  ← BURAYI DOLDURUN
+// Firebase Console → Proje ayarları → "Your apps" → Web app
+// bölümündeki firebaseConfig değerlerini aşağıya yapıştırın.
+// Doldurulursa öğrenciler kurulum ekranını hiç görmez, doğrudan
+// giriş ekranı açılır. Bu bilgiler gizli şifre DEĞİLDİR; veriyi
+// database.rules.json içindeki güvenlik kuralları korur.
+// Boş bırakılırsa uygulama eskisi gibi kurulum ekranını gösterir.
+// ============================================================
+const EMBEDDED_CONFIG = {
+  apiKey: "AIzaSyBWcvmxjLR7zFm2PrrsMCs3OX3lO2ygUgM",
+  authDomain: "jellyfish-club.firebaseapp.com",
+  databaseURL: "https://jellyfish-club-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "jellyfish-club",
+  storageBucket: "jellyfish-club.firebasestorage.app",
+  messagingSenderId: "208126697392",
+  appId: "1:208126697392:web:81ca4587b12bf713e44075"
+};
+let FIREBASE_CONFIG = EMBEDDED_CONFIG;
+const HAS_EMBEDDED_CONFIG = !!(EMBEDDED_CONFIG.apiKey && EMBEDDED_CONFIG.apiKey.trim());
+
+// STATE
+const state = {
+  clubCode: null,
+  isAdmin: false,
+  currentUser: null,
+  currentTeamId: null,
+  db: null,
+  uid: null,
+  authReady: null,
+  firebaseListeners: [],
+  teams: {},
+  notifications: {},
+  selectedColor: '#3b82f6',
+  editingTaskDeps: [],
+  editingTaskId: null,
+  currentDetailTaskId: null,
+  currentDetailTeamId: null
+};
+
+// FIREBASE INIT
+function initFirebase() {
+  if (HAS_EMBEDDED_CONFIG) {
+    document.getElementById('setup-link-wrap')?.classList.add('hidden');
+  } else {
+    const saved = localStorage.getItem('jf_firebase_config');
+    if (saved) { try { FIREBASE_CONFIG = JSON.parse(saved); } catch(e){} }
+  }
+  if (!FIREBASE_CONFIG.apiKey || !FIREBASE_CONFIG.apiKey.trim()) { showScreen('screen-setup'); return false; }
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    state.db = firebase.database();
+    // Anonim giriş: her tarayıcı Firebase'den kimlik alır. Güvenlik kuralları
+    // yalnızca bu kimliğe sahip (uygulamadan giren) kullanıcılara izin verir.
+    state.authReady = new Promise((resolve, reject) => {
+      const unsub = firebase.auth().onAuthStateChanged(user => {
+        if (user) { state.uid = user.uid; unsub(); resolve(user); }
+      });
+      firebase.auth().signInAnonymously().catch(e => {
+        console.error(e);
+        const msg = (e && e.code === 'auth/admin-restricted-operation') || (e && e.code === 'auth/operation-not-allowed')
+          ? 'Firebase\'de Anonim giriş kapalı. Danışman: Authentication → Sign-in method → Anonymous\'u açın.'
+          : 'Firebase bağlantısı kurulamadı: ' + (e.message || e.code);
+        showToast(msg, 'error'); reject(e);
+      });
+    });
+    return true;
+  } catch(e) { console.error(e); showScreen('screen-setup'); return false; }
+}
+
+function saveFirebaseConfig() {
+  const config = {
+    apiKey: document.getElementById('setup-apiKey').value.trim(),
+    authDomain: document.getElementById('setup-authDomain').value.trim(),
+    databaseURL: document.getElementById('setup-databaseURL').value.trim(),
+    projectId: document.getElementById('setup-projectId').value.trim(),
+    storageBucket: '', messagingSenderId: '',
+    appId: document.getElementById('setup-appId').value.trim()
+  };
+  if (!config.apiKey || !config.databaseURL || !config.projectId) { showToast('apiKey, databaseURL ve projectId zorunludur.','error'); return; }
+  localStorage.setItem('jf_firebase_config', JSON.stringify(config));
+  showToast('Firebase kaydedildi! Yenileniyor...','success');
+  setTimeout(() => location.reload(), 1200);
+}
+
+// DB HELPERS
+function dbRef(path) { return state.db.ref(path); }
+async function dbGet(path) { await state.authReady; const s = await dbRef(path).get(); return s.exists() ? s.val() : null; }
+async function dbSet(path, val) { await state.authReady; await dbRef(path).set(val); }
+async function dbUpdate(path, val) { await state.authReady; await dbRef(path).update(val); }
+async function dbPush(path, val) { await state.authReady; const r = dbRef(path).push(); await r.set({...val,id:r.key}); return r.key; }
+function isPermErr(e) { return e && /permission[_ ]denied/i.test(String(e.code||'')+' '+String(e.message||'')); }
+function friendlyErr(e) { return isPermErr(e) ? 'Bu işlem için yetkiniz yok.' : (e && e.message ? e.message : String(e)); }
+
+// ŞİFRE ÖZETİ (SHA-256) — şifre veritabanına asla açık metin yazılmaz
+async function sha256Hex(text) {
+  const data = new TextEncoder().encode(text);
+  if (window.crypto && crypto.subtle) {
+    const buf = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  return sha256Fallback(data);
+}
+function sha256Fallback(bytes) {
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const l=bytes.length, nb=((l+9+63)>>6)<<6, m=new Uint8Array(nb); m.set(bytes); m[l]=0x80;
+  const dv=new DataView(m.buffer); dv.setUint32(nb-4,(l*8)>>>0); dv.setUint32(nb-8,Math.floor(l/0x20000000));
+  const w=new Uint32Array(64), r=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let o=0;o<nb;o+=64){
+    for(let i=0;i<16;i++) w[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<64;i++){const s0=r(w[i-15],7)^r(w[i-15],18)^(w[i-15]>>>3), s1=r(w[i-2],17)^r(w[i-2],19)^(w[i-2]>>>10); w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;}
+    let [a,b,c,d,e,f,g,h]=H;
+    for(let i=0;i<64;i++){const t1=(h+(r(e,6)^r(e,11)^r(e,25))+((e&f)^(~e&g))+K[i]+w[i])>>>0, t2=((r(a,2)^r(a,13)^r(a,22))+((a&b)^(a&c)^(b&c)))>>>0; h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+    H=[H[0]+a,H[1]+b,H[2]+c,H[3]+d,H[4]+e,H[5]+f,H[6]+g,H[7]+h].map(x=>x>>>0);
+  }
+  return H.map(x=>x.toString(16).padStart(8,'0')).join('');
+}
+function adminHash(code, pass) { return sha256Hex('jellyfish:'+code+':'+pass); }
+
+// CLUB
+async function clubExists(code) { return (await dbGet('clubs/'+code+'/id')) !== null; }
+async function getClubTeams(code) { return (await dbGet('clubs/'+code+'/teams')) || {}; }
+async function createClubMeta(code) {
+  await dbUpdate('clubs/'+code, {id:code, name:code+' Kulübü', createdAt:Date.now()});
+}
+// Danışman girişi: şifre özeti, okunamayan clubSecrets alanındaki özetle
+// Firebase kuralları tarafından karşılaştırılır. Şifre yanlışsa yazma reddedilir.
+async function adminLogin(code, pass) {
+  const hash = await adminHash(code, pass);
+  const exists = await clubExists(code);
+  let claimed = false;
+  try { await dbSet('clubSecrets/'+code+'/adminHash', hash); claimed = true; }
+  catch(e) { if (!isPermErr(e)) throw e; } // özet zaten var → normal
+  try { await dbSet('clubs/'+code+'/admins/'+state.uid, hash); }
+  catch(e) { if (isPermErr(e)) return {ok:false}; throw e; }
+  if (!exists) await createClubMeta(code);
+  try { await dbRef('clubs/'+code+'/adminPass').remove(); } catch(e) {} // eski sürümden kalan açık şifreyi sil
+  return {ok:true, created:!exists, claimed};
+}
+
+// TEAMS
+async function createTeam(data) {
+  return dbPush('clubs/'+state.clubCode+'/teams', {...data, createdAt:Date.now()});
+}
+
+// MEMBERS
+async function addMember(teamId, data, code) {
+  return dbPush('clubs/'+(code||state.clubCode)+'/teams/'+teamId+'/members', {...data, joinedAt:Date.now()});
+}
+function getTeamMembers(teamId) {
+  const t = state.teams[teamId];
+  return (t && t.members) ? Object.values(t.members) : [];
+}
+function getMemberName(teamId, memberId) {
+  const m = getTeamMembers(teamId).find(x => x.id === memberId);
+  return m ? m.name : '—';
+}
+
+// TASKS
+async function createTask(teamId, task) {
+  const id = await dbPush('clubs/'+state.clubCode+'/teams/'+teamId+'/tasks', {...task, status:task.status||'todo', createdAt:Date.now(), updatedAt:Date.now()});
+  if (task.assigneeId) {
+    await createNotification({targetMemberId:task.assigneeId, targetTeamId:teamId, message:'"'+task.title+'" görevi sana atandı!', type:'task_assigned', relatedTaskId:id, relatedTeamId:teamId});
+  }
+  return id;
+}
+async function updateTask(teamId, taskId, updates) {
+  await dbUpdate('clubs/'+state.clubCode+'/teams/'+teamId+'/tasks/'+taskId, {...updates, updatedAt:Date.now()});
+}
+async function completeTask(teamId, taskId) {
+  const task = state.teams[teamId]&&state.teams[teamId].tasks&&state.teams[teamId].tasks[taskId];
+  if (!task) return;
+  await updateTask(teamId, taskId, {status:'done', completedAt:Date.now()});
+  // Fire dependency notifications
+  for (const [tId, team] of Object.entries(state.teams)) {
+    if (!team.tasks) continue;
+    for (const [tskId, tsk] of Object.entries(team.tasks)) {
+      if (!tsk.dependsOn) continue;
+      const deps = Array.isArray(tsk.dependsOn) ? tsk.dependsOn : Object.values(tsk.dependsOn);
+      if (deps.some(d => d.taskId === taskId && d.teamId === teamId)) {
+        await createNotification({
+          targetMemberId: tsk.assigneeId || ('__team__'+tId),
+          targetTeamId: tId,
+          message: '✅ "'+task.title+'" tamamlandı → "'+tsk.title+'" için devam edebilirsiniz!',
+          type: 'dependency_resolved',
+          relatedTaskId: tskId,
+          relatedTeamId: tId
+        });
+        showToast('"'+task.title+'" bitti → "'+tsk.title+'" için bildirim gönderildi!','success');
+      }
+    }
+  }
+}
+async function passTask(teamId, taskId, toMemberId, note) {
+  const task = state.teams[teamId]&&state.teams[teamId].tasks&&state.teams[teamId].tasks[taskId];
+  if (!task) return;
+  const entry = {from:task.assigneeId||null, fromName:task.assigneeId?getMemberName(teamId,task.assigneeId):'Atanmamış', to:toMemberId, toName:getMemberName(teamId,toMemberId), note:note||'', at:Date.now()};
+  let history = task.passHistory ? (Array.isArray(task.passHistory)?task.passHistory:Object.values(task.passHistory)) : [];
+  history.push(entry);
+  await updateTask(teamId, taskId, {assigneeId:toMemberId, passHistory:history});
+  await createNotification({targetMemberId:toMemberId, targetTeamId:teamId, message:'"'+task.title+'" görevi sana devredildi.'+(note?' Not: "'+note+'"':''), type:'task_passed', relatedTaskId:taskId, relatedTeamId:teamId});
+}
+
+// NOTIFICATIONS
+async function createNotification(notif) {
+  await dbPush('clubs/'+state.clubCode+'/notifications', {...notif, read:false, createdAt:Date.now()});
+}
+async function markNotifRead(notifId) {
+  await dbUpdate('clubs/'+state.clubCode+'/notifications/'+notifId, {read:true});
+}
+async function markAllNotifsRead() {
+  const updates = {};
+  getMyNotifs().filter(n=>!n.read).forEach(n => { updates['clubs/'+state.clubCode+'/notifications/'+n.id+'/read'] = true; });
+  if (Object.keys(updates).length) await state.db.ref().update(updates);
+}
+function getMyNotifs() {
+  if (!state.notifications) return [];
+  const all = Object.values(state.notifications).sort((a,b)=>b.createdAt-a.createdAt);
+  if (state.isAdmin) return all;
+  return all.filter(n => n.targetMemberId===state.currentUser?.id || n.targetMemberId===('__team__'+state.currentTeamId));
+}
+
+// LISTENERS
+async function startListeners() {
+  try { await state.authReady; } catch(e) { return; }
+  const tRef = state.db.ref('clubs/'+state.clubCode+'/teams');
+  tRef.on('value', snap => { state.teams = snap.exists()?snap.val():{}; renderCurrentView(); renderSidebarTeams(); renderFilterAssignee(); }, e => { console.error(e); showToast('Veri okunamadı: '+friendlyErr(e),'error'); });
+  state.firebaseListeners.push(() => tRef.off());
+  const nRef = state.db.ref('clubs/'+state.clubCode+'/notifications');
+  nRef.on('value', snap => { state.notifications = snap.exists()?snap.val():{}; renderNotifBadge(); if (!document.getElementById('panel-notif').classList.contains('hidden')) renderNotifPanel(); });
+  state.firebaseListeners.push(() => nRef.off());
+}
+function stopListeners() { state.firebaseListeners.forEach(f=>f()); state.firebaseListeners=[]; }
+
+// LOGIN
+let loginTab = 'admin';
+function setLoginTab(tab) {
+  loginTab = tab;
+  document.getElementById('admin-fields').classList.toggle('hidden', tab!=='admin');
+  document.getElementById('member-fields').classList.toggle('hidden', tab!=='member');
+  const base = 'flex-1 py-4 text-sm font-semibold ';
+  document.getElementById('tab-admin').className = base + (tab==='admin'?'text-blue-600 border-b-2 border-blue-600':'text-slate-400 border-b-2 border-transparent');
+  document.getElementById('tab-member').className = base + (tab==='member'?'text-blue-600 border-b-2 border-blue-600':'text-slate-400 border-b-2 border-transparent');
+  document.getElementById('btn-login-text').textContent = tab==='admin'?'Danışman Olarak Gir':'Takıma Katıl';
+  if (tab==='member') { const code=document.getElementById('login-club-code').value.trim().toUpperCase(); if(code) loadTeamsForLogin(code); }
+}
+
+document.getElementById('login-club-code').addEventListener('blur', async function() {
+  if (loginTab==='member' && this.value.trim()) await loadTeamsForLogin(this.value.trim().toUpperCase());
+});
+
+async function loadTeamsForLogin(code) {
+  const sel = document.getElementById('login-team-select');
+  const prev = sel.value;
+  let teams = {};
+  try { teams = await getClubTeams(code); } catch(e) { console.error(e); }
+  sel.innerHTML = '<option value="">-- Takım seçin --</option>';
+  if (Object.keys(teams).length) {
+    Object.values(teams).forEach(t => { const o=document.createElement('option'); o.value=t.id; o.textContent=t.name; sel.appendChild(o); });
+  } else { sel.innerHTML = '<option value="">Takım bulunamadı — danışmana sorun</option>'; }
+  if (prev && teams[prev]) sel.value = prev;
+}
+
+async function handleLogin() {
+  const code = document.getElementById('login-club-code').value.trim().toUpperCase();
+  if (!code) { showLoginError('Kulüp kodu boş olamaz.'); return; }
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Yükleniyor...';
+  try {
+    await state.authReady;
+    if (loginTab === 'admin') {
+      const pass = document.getElementById('login-admin-pass').value;
+      const resetBtn = () => { btn.disabled=false; btn.innerHTML='<i class="fas fa-arrow-right-to-bracket mr-2"></i><span id="btn-login-text">Danışman Olarak Gir</span>'; };
+      if (pass.length < 6) { showLoginError('Danışman şifresi en az 6 karakter olmalı.'); resetBtn(); return; }
+      const res = await adminLogin(code, pass);
+      if (!res.ok) { showLoginError('Danışman şifresi hatalı.'); resetBtn(); return; }
+      if (res.created) showToast('Yeni kulüp oluşturuldu!','success');
+      state.clubCode=code; state.isAdmin=true; state.currentUser={id:'admin',name:'Danışman',role:'Danışman'};
+    } else {
+      const name = document.getElementById('login-member-name').value.trim();
+      const role = document.getElementById('login-member-role').value;
+      const teamId = document.getElementById('login-team-select').value;
+      if (!name) { showLoginError('Adınızı girin.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-arrow-right-to-bracket mr-2"></i><span id="btn-login-text">Takıma Katıl</span>'; return; }
+      if (!teamId) { showLoginError('Takım seçin.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-arrow-right-to-bracket mr-2"></i><span id="btn-login-text">Takıma Katıl</span>'; return; }
+      if (!(await clubExists(code))) { showLoginError('Kulüp bulunamadı.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-arrow-right-to-bracket mr-2"></i><span id="btn-login-text">Takıma Katıl</span>'; return; }
+      let memberId = null;
+      const teams = await getClubTeams(code);
+      if (teams[teamId] && teams[teamId].members) {
+        const ex = Object.values(teams[teamId].members).find(m => (m.name||'').toLocaleLowerCase('tr')===name.toLocaleLowerCase('tr'));
+        if (ex) memberId = ex.id;
+      }
+      if (!memberId) memberId = await addMember(teamId, {name, role, uid:state.uid}, code);
+      state.clubCode=code; state.isAdmin=false; state.currentUser={id:memberId,name,role,teamId}; state.currentTeamId=teamId;
+    }
+    localStorage.setItem('jf_session', JSON.stringify({clubCode:state.clubCode,isAdmin:state.isAdmin,currentUser:state.currentUser,currentTeamId:state.currentTeamId}));
+    startApp();
+  } catch(e) {
+    console.error(e); showLoginError('Hata: '+friendlyErr(e));
+    btn.disabled=false; btn.innerHTML='<i class="fas fa-arrow-right-to-bracket mr-2"></i><span id="btn-login-text">'+(loginTab==='admin'?'Danışman Olarak Gir':'Takıma Katıl')+'</span>';
+  }
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent=msg; el.classList.remove('hidden');
+  setTimeout(()=>el.classList.add('hidden'),4000);
+}
+
+function handleLogout() {
+  stopListeners(); localStorage.removeItem('jf_session');
+  Object.assign(state,{clubCode:null,isAdmin:false,currentUser:null,currentTeamId:null,teams:{},notifications:{}});
+  showScreen('screen-login');
+}
+
+// APP START
+function startApp() {
+  showScreen('screen-app'); updateSidebarUser(); startListeners();
+  if (state.isAdmin) {
+    document.getElementById('nav-admin').classList.remove('hidden');
+    document.getElementById('btn-add-team').classList.remove('hidden');
+    showAdminDashboard();
+  } else {
+    document.getElementById('nav-admin').classList.add('hidden');
+    document.getElementById('btn-add-team').classList.add('hidden');
+    if (state.currentTeamId) showTeamView(state.currentTeamId);
+  }
+}
+
+function updateSidebarUser() {
+  const u = state.currentUser; if(!u) return;
+  document.getElementById('sidebar-user-name').textContent = u.name;
+  document.getElementById('sidebar-user-role').textContent = u.role;
+  document.getElementById('sidebar-avatar').textContent = u.name[0].toUpperCase();
+  document.getElementById('sidebar-club-name').textContent = state.clubCode;
+}
+
+// VIEWS
+function renderCurrentView() {
+  if (document.getElementById('screen-app').classList.contains('hidden')) return;
+  if (!document.getElementById('view-admin').classList.contains('hidden')) renderAdminDashboard();
+  if (!document.getElementById('view-team').classList.contains('hidden') && state.currentTeamId) renderTeamKanban(state.currentTeamId);
+}
+
+function showAdminDashboard() {
+  state.currentTeamId = null;
+  document.getElementById('view-admin').classList.remove('hidden');
+  document.getElementById('view-team').classList.add('hidden');
+  document.getElementById('topbar-title').textContent = 'Genel Bakış';
+  document.getElementById('topbar-sub').textContent = 'Tüm takımların durumu';
+  document.getElementById('btn-add-task').classList.add('hidden');
+  document.getElementById('btn-add-member').classList.add('hidden');
+  document.getElementById('filter-assignee').classList.add('hidden');
+  document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-btn-dashboard')?.classList.add('active');
+  renderAdminDashboard();
+}
+
+function showTeamView(teamId) {
+  state.currentTeamId = teamId;
+  const team = state.teams[teamId];
+  document.getElementById('view-admin').classList.add('hidden');
+  document.getElementById('view-team').classList.remove('hidden');
+  document.getElementById('topbar-title').textContent = team ? team.name : 'Takım';
+  document.getElementById('topbar-sub').textContent = team ? (team.description||'') : '';
+  document.getElementById('btn-add-task').classList.remove('hidden');
+  document.getElementById('filter-assignee').classList.remove('hidden');
+  if (state.isAdmin) document.getElementById('btn-add-member').classList.remove('hidden');
+  else document.getElementById('btn-add-member').classList.add('hidden');
+  document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-team-'+teamId)?.classList.add('active');
+  renderTeamKanban(teamId); renderFilterAssignee();
+}
+
+// ADMIN DASHBOARD
+function renderAdminDashboard() {
+  const grid = document.getElementById('admin-teams-grid');
+  const teams = Object.values(state.teams);
+  if (!teams.length) {
+    grid.innerHTML = '<div class="col-span-3 text-center py-20"><div class="text-6xl mb-4">🪼</div><h3 class="text-xl font-bold text-slate-700 mb-2">Henüz takım yok</h3><p class="text-slate-400 mb-6">Sol menüdeki "+" butonu ile ilk takımı oluşturun.</p></div>';
+    return;
+  }
+  grid.innerHTML = teams.map(team => {
+    const tasks = team.tasks ? Object.values(team.tasks) : [];
+    const members = team.members ? Object.values(team.members) : [];
+    const todo = tasks.filter(t=>t.status==='todo').length;
+    const inp = tasks.filter(t=>t.status==='inprogress').length;
+    const done = tasks.filter(t=>t.status==='done').length;
+    const blocked = tasks.filter(t=>t.status==='blocked').length;
+    const total = tasks.length;
+    const pct = total>0?Math.round((done/total)*100):0;
+    const today = new Date().toISOString().split('T')[0];
+    const overdue = tasks.filter(t=>t.deadline&&t.deadline<today&&t.status!=='done').length;
+    return '<div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition cursor-pointer" onclick="showTeamView(\''+team.id+'\')">'
+      +'<div class="h-1.5" style="background:'+( team.color||'#3b82f6')+'"></div>'
+      +'<div class="p-5">'
+      +'<div class="flex items-start justify-between mb-3"><div><h3 class="font-bold text-slate-800">'+escHtml(team.name)+'</h3><p class="text-xs text-slate-400 mt-0.5">'+escHtml(team.description||'')+'</p></div>'
+      +(blocked>0?'<span class="blink text-xs bg-red-100 text-red-600 font-semibold px-2 py-1 rounded-full">⚠️ '+blocked+' bekliyor</span>':'')
+      +'</div>'
+      +'<div class="grid grid-cols-4 gap-2 mb-4 text-center">'
+      +'<div><div class="text-lg font-bold text-slate-500">'+todo+'</div><div class="text-xs text-slate-400">Yapılacak</div></div>'
+      +'<div><div class="text-lg font-bold text-blue-600">'+inp+'</div><div class="text-xs text-slate-400">Devam</div></div>'
+      +'<div><div class="text-lg font-bold text-green-600">'+done+'</div><div class="text-xs text-slate-400">Tamam</div></div>'
+      +'<div><div class="text-lg font-bold '+(overdue>0?'text-red-500':'text-slate-400')+'">'+overdue+'</div><div class="text-xs text-slate-400">Gecikme</div></div>'
+      +'</div>'
+      +'<div class="mb-4"><div class="flex justify-between text-xs text-slate-400 mb-1"><span>İlerleme</span><span>%'+pct+'</span></div>'
+      +'<div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all" style="width:'+pct+'%;background:'+(team.color||'#3b82f6')+'"></div></div></div>'
+      +'<div class="flex items-center gap-1">'
+      +members.slice(0,5).map(m=>'<div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold" style="background:'+(team.color||'#3b82f6')+'" title="'+escHtml(m.name)+' ('+escHtml(m.role)+')">'+m.name[0].toUpperCase()+'</div>').join('')
+      +(members.length>5?'<span class="text-xs text-slate-400 ml-1">+'+( members.length-5)+'</span>':'')
+      +(members.length===0?'<span class="text-xs text-slate-400">Üye yok</span>':'')
+      +'</div>'
+      +'</div></div>';
+  }).join('');
+}
+
+// TEAM KANBAN
+function renderTeamKanban(teamId) {
+  const team = state.teams[teamId]; if(!team) return;
+  const filterAssignee = document.getElementById('filter-assignee').value;
+  let tasks = team.tasks ? Object.values(team.tasks) : [];
+  if (filterAssignee) tasks = tasks.filter(t=>t.assigneeId===filterAssignee);
+  const by = {todo:[],inprogress:[],blocked:[],done:[]};
+  tasks.forEach(t => { if(by[t.status]) by[t.status].push(t); else by.todo.push(t); });
+  const pO = {critical:0,high:1,medium:2,low:3};
+  Object.values(by).forEach(arr=>arr.sort((a,b)=>(pO[a.priority]??2)-(pO[b.priority]??2)));
+  ['todo','inprogress','blocked','done'].forEach(s=>{
+    document.getElementById('count-'+s).textContent = by[s].length;
+    const col = document.getElementById('col-'+s);
+    if (!by[s].length) col.innerHTML='<div class="border-2 border-dashed border-slate-200 rounded-xl h-24 flex items-center justify-center text-slate-300 text-xs">Görev yok</div>';
+    else col.innerHTML = by[s].map(t=>renderTaskCard(t,teamId)).join('');
+  });
+  const all=tasks.length, done=by.done.length;
+  const today=new Date().toISOString().split('T')[0];
+  const overdue=tasks.filter(t=>t.deadline&&t.deadline<today&&t.status!=='done').length;
+  const members=team.members?Object.values(team.members).length:0;
+  document.getElementById('team-stats').innerHTML=
+    '<div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-100 text-center min-w-[90px]"><div class="text-2xl font-bold text-slate-800">'+all+'</div><div class="text-xs text-slate-400">Toplam Görev</div></div>'
+    +'<div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-100 text-center min-w-[90px]"><div class="text-2xl font-bold text-green-600">'+done+'</div><div class="text-xs text-slate-400">Tamamlanan</div></div>'
+    +'<div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-100 text-center min-w-[90px]"><div class="text-2xl font-bold '+(overdue>0?'text-red-500':'text-slate-400')+'">'+overdue+'</div><div class="text-xs text-slate-400">Gecikme</div></div>'
+    +'<div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-100 text-center min-w-[90px]"><div class="text-2xl font-bold text-slate-600">'+members+'</div><div class="text-xs text-slate-400">Üye</div></div>';
+}
+
+function renderTaskCard(task, teamId) {
+  const team = state.teams[teamId];
+  const aName = task.assigneeId ? getMemberName(teamId,task.assigneeId) : null;
+  const today = new Date().toISOString().split('T')[0];
+  const isOverdue = task.deadline && task.deadline<today && task.status!=='done';
+  const tc = team&&team.color ? team.color : '#3b82f6';
+  const pC = {low:'bg-slate-100 text-slate-500',medium:'bg-yellow-100 text-yellow-700',high:'bg-orange-100 text-orange-700',critical:'bg-red-100 text-red-700'};
+  const pL = {low:'Düşük',medium:'Orta',high:'Yüksek',critical:'Kritik'};
+  const hasDeps = task.dependsOn && Object.values(task.dependsOn).length>0;
+  return '<div class="task-card bg-white rounded-xl shadow-sm border border-slate-100 p-3.5 hover:shadow-md hover:border-blue-200 transition fade-in" onclick="openDetailModal(\''+teamId+'\',\''+task.id+'\')">'
+    +'<div class="flex items-start justify-between gap-2 mb-2">'
+    +'<p class="text-sm font-semibold text-slate-800 leading-snug flex-1">'+escHtml(task.title)+'</p>'
+    +'<div class="w-1 min-h-[20px] rounded team-bar flex-shrink-0" style="background:'+tc+'"></div>'
+    +'</div>'
+    +(task.description?'<p class="text-xs text-slate-400 mb-2 line-clamp-2">'+escHtml(task.description)+'</p>':'')
+    +'<div class="flex items-center justify-between mt-2 flex-wrap gap-1">'
+    +'<span class="text-xs font-medium px-2 py-0.5 rounded-full '+(pC[task.priority]||'bg-slate-100 text-slate-500')+'">'+( pL[task.priority]||task.priority)+'</span>'
+    +'<div class="flex items-center gap-2">'
+    +(hasDeps?'<span title="Bağımlılık var" class="text-xs text-purple-400"><i class="fas fa-link"></i></span>':'')
+    +(isOverdue?'<span class="text-xs text-red-500 font-semibold blink"><i class="fas fa-clock mr-0.5"></i>Gecikti</span>':(task.deadline?'<span class="text-xs text-slate-400">'+formatDate(task.deadline)+'</span>':''))
+    +'</div></div>'
+    +(aName?'<div class="mt-2.5 flex items-center gap-1.5"><div class="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background:'+tc+'">'+aName[0].toUpperCase()+'</div><span class="text-xs text-slate-500 truncate">'+escHtml(aName)+'</span></div>':'')
+    +'</div>';
+}
+
+// SIDEBAR TEAMS
+function renderSidebarTeams() {
+  const nav = document.getElementById('nav-teams');
+  const teams = Object.values(state.teams);
+  if (!teams.length) { nav.innerHTML='<p class="text-xs text-slate-600 px-3 py-2">Takım yok</p>'; return; }
+  nav.innerHTML = teams.map(team=>'<button onclick="showTeamView(\''+team.id+'\')" id="nav-team-'+team.id+'" class="sidebar-item w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-white/10 transition mb-0.5"><span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:'+(team.color||'#3b82f6')+'"></span><span class="truncate">'+escHtml(team.name)+'</span></button>').join('');
+}
+
+// FILTER
+function renderFilterAssignee() {
+  const sel = document.getElementById('filter-assignee');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Tüm Görevler</option>';
+  if (state.currentTeamId) {
+    getTeamMembers(state.currentTeamId).forEach(m=>{const o=document.createElement('option');o.value=m.id;o.textContent=m.name;if(m.id===cur)o.selected=true;sel.appendChild(o);});
+  }
+}
+document.getElementById('filter-assignee').addEventListener('change', ()=>{ if(state.currentTeamId) renderTeamKanban(state.currentTeamId); });
+
+// MODAL: CREATE TEAM
+let selectedTeamColor = '#3b82f6';
+function selectTeamColor(color) {
+  selectedTeamColor = color;
+  document.getElementById('team-color').value = color;
+  document.querySelectorAll('.color-opt').forEach(el=>{
+    const active = el.dataset.color===color;
+    el.classList.toggle('ring-2',active); el.classList.toggle('ring-blue-400',active); el.classList.toggle('ring-offset-2',active);
+  });
+}
+function openCreateTeamModal() {
+  document.getElementById('team-name').value=''; document.getElementById('team-desc').value='';
+  selectTeamColor('#3b82f6'); openModal('modal-create-team');
+}
+async function submitCreateTeam() {
+  const name = document.getElementById('team-name').value.trim();
+  if (!name) { showToast('Takım adı boş olamaz.','error'); return; }
+  try {
+    await createTeam({name, description:document.getElementById('team-desc').value.trim(), color:selectedTeamColor});
+    closeModal('modal-create-team'); showToast('"'+name+'" takımı oluşturuldu!','success');
+  } catch(e) { showToast('Hata: '+friendlyErr(e),'error'); }
+}
+
+// MODAL: ADD MEMBER
+function openAddMemberModal() { document.getElementById('member-name').value=''; openModal('modal-add-member'); }
+async function submitAddMember() {
+  const name = document.getElementById('member-name').value.trim();
+  const role = document.getElementById('member-role').value;
+  if (!name) { showToast('Ad boş olamaz.','error'); return; }
+  if (!state.currentTeamId) { showToast('Önce bir takım seçin.','error'); return; }
+  try { await addMember(state.currentTeamId,{name,role}); closeModal('modal-add-member'); showToast(name+' takıma eklendi!','success'); }
+  catch(e) { showToast('Hata: '+friendlyErr(e),'error'); }
+}
+
+// MODAL: CREATE/EDIT TASK
+function openCreateTaskModal() {
+  if (!state.currentTeamId) { showToast('Önce bir takım seçin.','error'); return; }
+  document.getElementById('modal-task-title').textContent='Yeni Görev';
+  ['task-title','task-desc','task-deadline'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('task-priority').value='medium';
+  document.getElementById('task-status').value='todo';
+  document.getElementById('task-id-edit').value='';
+  state.editingTaskDeps=[]; state.editingTaskId=null;
+  populateTaskAssigneeSelect(state.currentTeamId,null);
+  populateDepTeamSelect(); renderDepList(); openModal('modal-task');
+}
+function openEditTaskModal(teamId, taskId) {
+  const task = state.teams[teamId]&&state.teams[teamId].tasks&&state.teams[teamId].tasks[taskId];
+  if (!task) return;
+  document.getElementById('modal-task-title').textContent='Görevi Düzenle';
+  document.getElementById('task-title').value=task.title||'';
+  document.getElementById('task-desc').value=task.description||'';
+  document.getElementById('task-deadline').value=task.deadline||'';
+  document.getElementById('task-priority').value=task.priority||'medium';
+  document.getElementById('task-status').value=task.status||'todo';
+  document.getElementById('task-id-edit').value=taskId;
+  state.editingTaskId=taskId;
+  state.editingTaskDeps=task.dependsOn?(Array.isArray(task.dependsOn)?task.dependsOn:Object.values(task.dependsOn)):[];
+  populateTaskAssigneeSelect(teamId,task.assigneeId);
+  populateDepTeamSelect(); renderDepList(); closeModal('modal-detail'); openModal('modal-task');
+}
+function populateTaskAssigneeSelect(teamId, curId) {
+  const sel = document.getElementById('task-assignee');
+  sel.innerHTML='<option value="">Atanmadı</option>';
+  getTeamMembers(teamId).forEach(m=>{const o=document.createElement('option');o.value=m.id;o.textContent=m.name+' ('+m.role+')';if(m.id===curId)o.selected=true;sel.appendChild(o);});
+}
+function populateDepTeamSelect() {
+  const sel = document.getElementById('dep-team-select');
+  sel.innerHTML='<option value="">Takım seçin...</option>';
+  Object.values(state.teams).forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o);});
+}
+document.getElementById('dep-team-select').addEventListener('change', function() {
+  const sel=document.getElementById('dep-task-select');
+  sel.innerHTML='<option value="">Görev seçin...</option>';
+  if (this.value && state.teams[this.value]&&state.teams[this.value].tasks) {
+    Object.values(state.teams[this.value].tasks).forEach(t=>{if(t.status!=='done'){const o=document.createElement('option');o.value=t.id;o.textContent=t.title;sel.appendChild(o);}});
+  }
+});
+function addDependency() {
+  const teamId=document.getElementById('dep-team-select').value;
+  const taskId=document.getElementById('dep-task-select').value;
+  if (!teamId||!taskId) { showToast('Takım ve görev seçin.','error'); return; }
+  if (state.editingTaskDeps.some(d=>d.taskId===taskId&&d.teamId===teamId)) { showToast('Bu bağımlılık zaten ekli.','warning'); return; }
+  state.editingTaskDeps.push({teamId, taskId, teamName:state.teams[teamId]?.name||teamId, taskTitle:state.teams[teamId]?.tasks?.[taskId]?.title||taskId});
+  renderDepList();
+}
+function removeDep(i) { state.editingTaskDeps.splice(i,1); renderDepList(); }
+function renderDepList() {
+  const el=document.getElementById('dep-list');
+  el.innerHTML=state.editingTaskDeps.map((d,i)=>'<div class="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-lg px-3 py-2"><span class="text-xs text-purple-700"><i class="fas fa-link mr-1"></i>'+escHtml(d.teamName)+' → <strong>'+escHtml(d.taskTitle)+'</strong> bitince bildirim</span><button onclick="removeDep('+i+')" class="text-purple-400 hover:text-red-500 ml-2"><i class="fas fa-times"></i></button></div>').join('');
+}
+async function submitTask() {
+  const title = document.getElementById('task-title').value.trim();
+  if (!title) { showToast('Görev başlığı boş olamaz.','error'); return; }
+  const task = {title, description:document.getElementById('task-desc').value.trim(), assigneeId:document.getElementById('task-assignee').value||null, priority:document.getElementById('task-priority').value, status:document.getElementById('task-status').value, deadline:document.getElementById('task-deadline').value||null, dependsOn:state.editingTaskDeps.length>0?state.editingTaskDeps:null, createdBy:state.currentUser?.id||'admin'};
+  try {
+    const editId = document.getElementById('task-id-edit').value;
+    if (editId) { await updateTask(state.currentTeamId,editId,task); showToast('Görev güncellendi!','success'); }
+    else { await createTask(state.currentTeamId,task); showToast('Görev oluşturuldu!','success'); }
+    closeModal('modal-task');
+  } catch(e) { showToast('Hata: '+friendlyErr(e),'error'); }
+}
+
+// MODAL: DETAIL
+function openDetailModal(teamId, taskId) {
+  const task = state.teams[teamId]&&state.teams[teamId].tasks&&state.teams[teamId].tasks[taskId];
+  if (!task) return;
+  state.currentDetailTaskId=taskId; state.currentDetailTeamId=teamId;
+  const team=state.teams[teamId];
+  const tc=team&&team.color?team.color:'#3b82f6';
+  const aName=task.assigneeId?getMemberName(teamId,task.assigneeId):null;
+  const today=new Date().toISOString().split('T')[0];
+  const isOverdue=task.deadline&&task.deadline<today&&task.status!=='done';
+  document.getElementById('detail-title').textContent=task.title;
+  const sL={todo:'Yapılacak',inprogress:'Devam Ediyor',done:'Tamamlandı',blocked:'Bekliyor'};
+  const sC={todo:'status-todo',inprogress:'status-inprogress',done:'status-done',blocked:'status-blocked'};
+  const pL={low:'🟢 Düşük',medium:'🟡 Orta',high:'🟠 Yüksek',critical:'🔴 Kritik'};
+  document.getElementById('detail-badges').innerHTML=
+    '<span class="text-xs font-semibold px-2.5 py-1 rounded-full '+(sC[task.status]||'status-todo')+'">'+(sL[task.status]||task.status)+'</span>'
+    +'<span class="text-xs font-semibold px-2.5 py-1 rounded-full priority-'+task.priority+'">'+(pL[task.priority]||task.priority)+'</span>'
+    +(isOverdue?'<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-600 blink">⏰ Gecikti!</span>':'');
+  document.getElementById('detail-desc').textContent=task.description||'Açıklama eklenmemiş.';
+  let meta='';
+  if (aName) meta+='<div class="flex gap-2"><span class="text-slate-400 w-28 text-xs">Atanan:</span><span class="font-medium text-sm">'+escHtml(aName)+'</span></div>';
+  if (task.deadline) meta+='<div class="flex gap-2"><span class="text-slate-400 w-28 text-xs">Son Tarih:</span><span class="font-medium text-sm '+(isOverdue?'text-red-500':'')+'">'+formatDate(task.deadline)+'</span></div>';
+  if (task.completedAt) meta+='<div class="flex gap-2"><span class="text-slate-400 w-28 text-xs">Tamamlandı:</span><span class="font-medium text-sm text-green-600">'+formatDatetime(task.completedAt)+'</span></div>';
+  meta+='<div class="flex gap-2"><span class="text-slate-400 w-28 text-xs">Takım:</span><span class="font-medium text-sm">'+escHtml(team&&team.name||'')+'</span></div>';
+  document.getElementById('detail-meta').innerHTML=meta;
+  const deps=task.dependsOn?(Array.isArray(task.dependsOn)?task.dependsOn:Object.values(task.dependsOn)):[];
+  if (deps.length) {
+    document.getElementById('detail-deps').classList.remove('hidden');
+    document.getElementById('detail-deps-list').innerHTML=deps.map(d=>'<div class="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1"><i class="fas fa-link mr-1"></i>'+escHtml(d.teamName)+' → <strong>'+escHtml(d.taskTitle)+'</strong></div>').join('');
+  } else document.getElementById('detail-deps').classList.add('hidden');
+  const history=task.passHistory?(Array.isArray(task.passHistory)?task.passHistory:Object.values(task.passHistory)):[];
+  if (history.length) {
+    document.getElementById('detail-history').classList.remove('hidden');
+    document.getElementById('detail-history-list').innerHTML=history.map(h=>'<div class="text-xs bg-slate-50 rounded-lg px-3 py-2"><span class="font-medium">'+escHtml(h.fromName||'?')+'</span><span class="text-slate-400"> → </span><span class="font-medium">'+escHtml(h.toName||'?')+'</span>'+(h.note?'<span class="text-slate-400"> — "'+escHtml(h.note)+'"</span>':'')+'<div class="text-slate-300 mt-0.5">'+formatDatetime(h.at)+'</div></div>').join('');
+  } else document.getElementById('detail-history').classList.add('hidden');
+  let actions='';
+  if (task.status!=='done') {
+    actions+='<button onclick="quickCompleteTask(\''+teamId+'\',\''+taskId+'\')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"><i class="fas fa-check mr-1"></i> Tamamla</button>';
+    actions+='<button onclick="openPassModal(\''+teamId+'\',\''+taskId+'\')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"><i class="fas fa-share mr-1"></i> Pasla</button>';
+  }
+  if (state.isAdmin) {
+    actions+='<button onclick="openEditTaskModal(\''+teamId+'\',\''+taskId+'\')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold px-4 py-2 rounded-lg transition"><i class="fas fa-pen"></i></button>';
+    actions+='<button onclick="deleteTask(\''+teamId+'\',\''+taskId+'\')" class="bg-red-50 hover:bg-red-100 text-red-500 text-sm font-semibold px-4 py-2 rounded-lg transition"><i class="fas fa-trash"></i></button>';
+  }
+  document.getElementById('detail-actions').innerHTML=actions;
+  openModal('modal-detail');
+}
+async function quickCompleteTask(teamId,taskId) { closeModal('modal-detail'); await completeTask(teamId,taskId); showToast('Görev tamamlandı! 🎉','success'); }
+async function deleteTask(teamId,taskId) {
+  if (!confirm('Bu görevi silmek istediğinize emin misiniz?')) return;
+  try { await state.db.ref('clubs/'+state.clubCode+'/teams/'+teamId+'/tasks/'+taskId).remove(); }
+  catch(e) { showToast('Silinemedi: '+friendlyErr(e),'error'); return; }
+  closeModal('modal-detail'); showToast('Görev silindi.','info');
+}
+
+// MODAL: PASS
+function openPassModal(teamId, taskId) {
+  const task=state.teams[teamId]&&state.teams[teamId].tasks&&state.teams[teamId].tasks[taskId];
+  if (!task) return;
+  document.getElementById('pass-task-id').value=taskId;
+  document.getElementById('pass-team-id').value=teamId;
+  document.getElementById('pass-note').value='';
+  const sel=document.getElementById('pass-to');
+  sel.innerHTML='<option value="">Kişi seçin...</option>';
+  getTeamMembers(teamId).forEach(m=>{if(m.id!==task.assigneeId){const o=document.createElement('option');o.value=m.id;o.textContent=m.name+' ('+m.role+')';sel.appendChild(o);}});
+  closeModal('modal-detail'); openModal('modal-pass');
+}
+async function submitPass() {
+  const taskId=document.getElementById('pass-task-id').value;
+  const teamId=document.getElementById('pass-team-id').value;
+  const toId=document.getElementById('pass-to').value;
+  const note=document.getElementById('pass-note').value.trim();
+  if (!toId) { showToast('Lütfen kişi seçin.','error'); return; }
+  try { await passTask(teamId,taskId,toId,note); closeModal('modal-pass'); showToast('Görev devredildi! Bildirim gönderildi.','success'); }
+  catch(e) { showToast('Hata: '+friendlyErr(e),'error'); }
+}
+
+// NOTIFICATIONS
+function renderNotifBadge() {
+  const unread=getMyNotifs().filter(n=>!n.read).length;
+  const badge=document.getElementById('notif-badge');
+  if (unread>0) { badge.textContent=unread>9?'9+':unread; badge.classList.remove('hidden'); badge.classList.add('flex'); }
+  else { badge.classList.add('hidden'); badge.classList.remove('flex'); }
+}
+function openNotifPanel() {
+  document.getElementById('panel-notif').classList.remove('hidden');
+  renderNotifPanel();
+  setTimeout(()=>getMyNotifs().filter(n=>!n.read).forEach(n=>markNotifRead(n.id)),2000);
+}
+function closeNotifPanel() { document.getElementById('panel-notif').classList.add('hidden'); }
+function renderNotifPanel() {
+  const list=document.getElementById('notif-list');
+  const notifs=getMyNotifs();
+  if (!notifs.length) { list.innerHTML='<p class="text-center text-slate-400 text-sm pt-8">Bildirim yok</p>'; return; }
+  const icons={task_assigned:'fa-user-check text-blue-500',task_passed:'fa-share text-purple-500',dependency_resolved:'fa-check-circle text-green-500',task_completed:'fa-check text-green-500'};
+  list.innerHTML=notifs.map(n=>'<div class="flex gap-3 p-3 rounded-xl '+(n.read?'bg-slate-50':'bg-blue-50 border border-blue-100')+' cursor-pointer hover:bg-slate-100 transition" onclick="notifClick(\''+n.id+'\',\''+(n.relatedTeamId||'')+'\',\''+(n.relatedTaskId||'')+'\')">'
+    +'<div class="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center flex-shrink-0"><i class="fas '+(icons[n.type]||'fa-bell text-slate-400')+' text-xs"></i></div>'
+    +'<div class="flex-1 min-w-0"><p class="text-xs text-slate-700 leading-relaxed">'+escHtml(n.message)+'</p><p class="text-xs text-slate-400 mt-1">'+timeAgo(n.createdAt)+'</p></div>'
+    +(!n.read?'<div class="notif-dot mt-1.5 flex-shrink-0"></div>':'')
+    +'</div>').join('');
+}
+function notifClick(notifId,teamId,taskId) {
+  markNotifRead(notifId); closeNotifPanel();
+  if (teamId&&state.teams[teamId]) {
+    showTeamView(teamId);
+    if (taskId&&state.teams[teamId]?.tasks?.[taskId]) setTimeout(()=>openDetailModal(teamId,taskId),300);
+  }
+}
+
+// UTILS
+function showScreen(id) {
+  ['screen-setup','screen-login','screen-app'].forEach(s=>{
+    const el=document.getElementById(s);
+    if (s===id) el.classList.remove('hidden'); else el.classList.add('hidden');
+  });
+}
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function showToast(msg, type='info') {
+  const c={success:'bg-green-500',error:'bg-red-500',info:'bg-blue-500',warning:'bg-amber-500'};
+  const ic={success:'fa-check-circle',error:'fa-times-circle',info:'fa-info-circle',warning:'fa-exclamation-circle'};
+  const t=document.createElement('div');
+  t.className='pointer-events-auto '+c[type]+' text-white text-sm px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5 fade-in';
+  t.innerHTML='<i class="fas '+ic[type]+' flex-shrink-0"></i><span>'+escHtml(msg)+'</span>';
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(()=>t.remove(),300);},3500);
+}
+function escHtml(s) { return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''; }
+function formatDate(d) { if(!d) return ''; const [y,m,day]=d.split('-'); return day+'.'+m+'.'+y; }
+function formatDatetime(ts) { if(!ts) return ''; const d=new Date(ts); return d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}); }
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff=Date.now()-ts, min=Math.floor(diff/60000);
+  if (min<1) return 'Az önce'; if (min<60) return min+' dakika önce';
+  const hr=Math.floor(min/60); if (hr<24) return hr+' saat önce';
+  return Math.floor(hr/24)+' gün önce';
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click', function(e){ if(e.target===this) this.classList.add('hidden'); });
+});
+document.addEventListener('click', function(e) {
+  const panel=document.getElementById('panel-notif');
+  if (!panel.classList.contains('hidden')&&!panel.contains(e.target)&&!e.target.closest('[onclick="openNotifPanel()"]')) closeNotifPanel();
+});
+
+// AUTO LOGIN
+window.addEventListener('load', () => {
+  if (!initFirebase()) return;
+  const saved = localStorage.getItem('jf_session');
+  if (saved) {
+    try {
+      const s=JSON.parse(saved);
+      state.authReady.then(async () => {
+        if (s.isAdmin) {
+          // Danışman oturumu ancak bu tarayıcının kimliği danışman olarak kayıtlıysa geri yüklenir
+          const ok = await dbGet('clubs/'+s.clubCode+'/admins/'+state.uid).catch(()=>null);
+          if (!ok) { localStorage.removeItem('jf_session'); showScreen('screen-login'); return; }
+        }
+        Object.assign(state,s); startApp();
+      }).catch(() => showScreen('screen-login'));
+      return;
+    } catch(e) { localStorage.removeItem('jf_session'); }
+  }
+  showScreen('screen-login');
+});
+</script>
+</body>
+</html>

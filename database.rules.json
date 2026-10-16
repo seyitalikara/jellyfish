@@ -1,0 +1,60 @@
+{
+  "rules": {
+    "clubSecrets": {
+      "$code": {
+        "adminHash": {
+          ".read": false,
+          ".write": "auth != null && !data.exists() && newData.isString() && newData.val().length === 64"
+        }
+      }
+    },
+    "clubs": {
+      "$code": {
+        "id": {
+          ".read": "auth != null",
+          ".write": "auth != null && (!data.exists() || root.child('clubs').child($code).child('admins').child(auth.uid).exists())"
+        },
+        "name": {
+          ".read": "auth != null",
+          ".write": "auth != null && (!data.exists() || root.child('clubs').child($code).child('admins').child(auth.uid).exists())"
+        },
+        "createdAt": {
+          ".read": "auth != null",
+          ".write": "auth != null && (!data.exists() || root.child('clubs').child($code).child('admins').child(auth.uid).exists())"
+        },
+        "adminPass": {
+          ".read": false,
+          ".write": "auth != null && !newData.exists() && root.child('clubs').child($code).child('admins').child(auth.uid).exists()"
+        },
+        "admins": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && newData.val() === root.child('clubSecrets').child($code).child('adminHash').val()"
+          }
+        },
+        "teams": {
+          ".read": "auth != null",
+          "$teamId": {
+            ".write": "auth != null && root.child('clubs').child($code).child('admins').child(auth.uid).exists()",
+            "members": {
+              "$memberId": {
+                ".write": "auth != null && newData.exists() && root.child('clubs').child($code).child('teams').child($teamId).child('id').exists() && (!data.exists() || data.child('uid').val() === auth.uid)"
+              }
+            },
+            "tasks": {
+              "$taskId": {
+                ".write": "auth != null && newData.exists() && root.child('clubs').child($code).child('teams').child($teamId).child('id').exists()"
+              }
+            }
+          }
+        },
+        "notifications": {
+          ".read": "auth != null",
+          "$notifId": {
+            ".write": "auth != null && newData.exists()"
+          }
+        }
+      }
+    }
+  }
+}
