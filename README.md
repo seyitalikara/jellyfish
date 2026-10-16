@@ -2,11 +2,12 @@
 
 Kulüp takımları için gerçek zamanlı görev dağıtım uygulaması. Danışman takımları kurar ve tüm görevleri izler. Takım üyeleri görev oluşturur, tamamlar ve birbirine devreder (paslar).
 
+
 ## 👩‍🎓 Öğrenciler için: nasıl kullanırım?
 
 Hiçbir şey indirmenize gerek yok.
 
-1. Danışmanınızın paylaştığı bağlantıyı açın: **`https://KULLANICI-ADI.github.io/JellyFish/`**
+1. Danışmanınızın paylaştığı bağlantıyı açın: **`https://seyitalikara.github.io/jellyfish/`**
 2. **Takım Üyesi** sekmesine geçin.
 3. Danışmanın verdiği **Kulüp Kodunu** yazın.
 4. Adınızı, alanınızı ve takımınızı seçip **Takıma Katıl**'a basın.
