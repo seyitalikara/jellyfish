@@ -1,6 +1,6 @@
 # 🪼 JellyFish — Takım Görev Yönetimi
 
-Kulüp takımları için gerçek zamanlı görev dağıtım uygulaması. Danışman takımları kurar ve tüm görevleri izler. Takım üyeleri görev oluşturur, tamamlar ve birbirine devreder (paslar).
+Kulüp takımları için gerçek zamanlı görev dağıtım ve rapor toplama uygulaması. Danışman takımları kurar, tüm görevleri izler ve öğrenci raporlarını değerlendirir. Takım üyeleri görev oluşturur, tamamlar, birbirine devreder (paslar) ve danışmana rapor gönderir.
 
 
 ## 👩‍🎓 Öğrenciler için: nasıl kullanırım?
@@ -10,13 +10,39 @@ Hiçbir şey indirmenize gerek yok.
 1. Danışmanınızın paylaştığı bağlantıyı açın: **`https://seyitalikara.github.io/jellyfish/`**
 2. **Takım Üyesi** sekmesine geçin.
 3. Danışmanın verdiği **Kulüp Kodunu** yazın.
-4. Adınızı, alanınızı ve takımınızı seçip **Takıma Katıl**'a basın.
+4. Adınızı, **kişisel şifrenizi** (en az 4 karakter), alanınızı ve takımınızı seçip **Takıma Katıl**'a basın.
 
-> Aynı tarayıcıdan tekrar girdiğinizde oturumunuz açık kalır. Başka bir cihazdan girerken adınızı **aynı şekilde** yazın.
+> **Kişisel şifre:** İlk girişte yazdığınız şifre hesabınıza kilitlenir. Başka bir cihazdan girerken adınızı **aynı şekilde** ve **aynı şifreyle** yazın. Şifrenizi unutursanız danışmanınız sıfırlayabilir.
+
+### 📄 Rapor gönderme
+
+1. Sol menüden **Raporlarım**'a tıklayın.
+2. Rapor başlığını yazın, isterseniz kısa bir not ekleyin.
+3. **PDF veya Word** (.pdf, .doc, .docx, en fazla 10 MB) dosyanızı sürükleyip bırakın ya da tıklayıp seçin.
+4. **Raporu Gönder**'e basın.
+
+- Raporunuzu yalnızca **siz ve danışmanınız** görebilir; takım arkadaşlarınız göremez.
+- Danışman değerlendirene kadar raporu silip yeniden gönderebilirsiniz.
+- Geri bildirim gelince bildirim alırsınız. Danışmanın yorumu ve varsa yorumlu dosyası raporun altında görünür.
+- **Revizyon istendi** ise **Revize sürüm yükle** düğmesiyle düzeltilmiş sürümü gönderin.
 
 Telefonda: bağlantıyı açın, ardından tarayıcı menüsünden "Ana ekrana ekle"yi seçin.
 
-## 🧑‍🏫 Danışman için: yayınlama
+## 🧑‍🏫 Danışman için
+
+### Raporları değerlendirme
+
+1. Sol menüden **Raporlar**'a tıklayın. Değerlendirilmeyi bekleyen rapor sayısı menüde turuncu rozetle görünür.
+2. Raporları takıma, duruma veya öğrenci adına göre süzebilirsiniz.
+3. **İndir** dosyayı `ÖğrenciAdı_dosya.pdf` adıyla indirir. PDF'ler için **Görüntüle** yeni sekmede açar.
+4. **Değerlendir** → karar (**Onaylandı** / **Revizyon istendi**), geri bildirim metni ve isteğe bağlı olarak yorum eklediğiniz PDF/Word dosyası → **Geri Bildirimi Gönder**. Öğrenciye bildirim gider.
+5. Verdiğiniz geri bildirimi daha sonra **Düzenle** ile değiştirebilirsiniz.
+
+### Öğrenci şifresi sıfırlama
+
+Takım ekranında **Üyeler** → öğrencinin yanındaki **Şifre sıfırla**. Öğrenci bir sonraki girişinde yeni şifre belirler.
+
+### İlk kurulum ve yayınlama
 
 İlk kurulum (Firebase projesi, güvenlik kuralları, anonim giriş) için **[FIREBASE_KURULUM.md](FIREBASE_KURULUM.md)** dosyasına bakın.
 
@@ -27,6 +53,8 @@ GitHub Pages ile yayınlama:
 3. Depoda **Settings → Pages → Branch: `main` / `(root)` → Save**.
 4. 1-2 dakika sonra uygulama `https://KULLANICI-ADI.github.io/JellyFish/` adresinde yayında olur. Bu bağlantıyı öğrencilerle paylaşın.
 
+> ⚠️ **Sürüm güncellerken:** `database.rules.json` değiştiyse içeriğini Firebase Console → Realtime Database → **Rules** sekmesine yapıştırıp **Publish** demeyi unutmayın. GitHub'a yüklemek kuralları Firebase'e aktarmaz.
+
 ## 🔐 Güvenlik
 
 - `index.html` içindeki Firebase bilgileri **gizli şifre değildir**. Google bunların web sayfasında görünmesini normal kabul eder.
@@ -34,7 +62,8 @@ GitHub Pages ile yayınlama:
   - Yalnızca uygulamadan giriş yapanlar veriye erişebilir (Firebase Anonim Giriş).
   - **Takım oluşturma, görev silme ve üye ekleme** yalnızca danışmana açıktır.
   - Öğrenciler görev ekleyebilir, güncelleyebilir, tamamlayabilir ve paslayabilir, ama **silemez**.
-  - Danışman şifresi veritabanında açık metin olarak tutulmaz. Yalnızca SHA-256 özeti saklanır ve bu özeti kimse okuyamaz.
+  - **Raporlar ve dosyaları** yalnızca raporu gönderen öğrenci ve danışman tarafından okunabilir. Geri bildirimi yalnızca danışman yazabilir.
+  - Danışman ve öğrenci şifreleri veritabanında açık metin olarak tutulmaz. Yalnızca SHA-256 özeti saklanır ve bu özeti kimse okuyamaz.
 - Kulüp kodunu yalnızca kendi öğrencilerinizle paylaşın.
 
 ## 📁 Dosyalar

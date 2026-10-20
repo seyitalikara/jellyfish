@@ -110,6 +110,11 @@
             <input id="login-member-name" type="text" placeholder="Ali Yılmaz" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
           </div>
           <div class="mb-4">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Kişisel Şifre</label>
+            <input id="login-member-pin" type="password" placeholder="En az 4 karakter" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
+            <p class="text-[11px] text-slate-400 mt-1 leading-snug">İlk girişte yazdığınız şifre hesabınıza kilitlenir; sonraki girişlerde ve başka cihazlarda aynı şifreyi kullanın. Raporlarınızı yalnızca siz ve danışmanınız görebilir.</p>
+          </div>
+          <div class="mb-4">
             <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Uzmanlık Alanı</label>
             <select id="login-member-role" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm bg-white">
               <option value="Yazılım">💻 Yazılım</option>
@@ -168,6 +173,12 @@
           <i class="fas fa-th-large w-4 text-center"></i> Genel Bakış
         </button>
       </div>
+      <div class="mb-3">
+        <button onclick="showReportsView()" id="nav-btn-reports" class="sidebar-item w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-white/10 transition">
+          <i class="fas fa-file-lines w-4 text-center"></i> <span id="nav-reports-label">Raporlar</span>
+          <span id="nav-reports-badge" class="hidden ml-auto bg-amber-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full leading-none"></span>
+        </button>
+      </div>
       <div class="mb-1">
         <div class="flex items-center justify-between px-3 mb-1">
           <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Takımlar</span>
@@ -202,6 +213,9 @@
         <button id="btn-add-member" onclick="openAddMemberModal()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
           <i class="fas fa-user-plus"></i> Üye Ekle
         </button>
+        <button id="btn-members" onclick="openMembersModal()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+          <i class="fas fa-users"></i> Üyeler
+        </button>
       </div>
     </div>
     <div id="content" class="flex-1 overflow-auto p-6">
@@ -227,6 +241,56 @@
             <div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-green-500"></span><span class="text-sm font-semibold text-slate-600">Tamamlandı</span><span id="count-done" class="ml-auto bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full"></span></div>
             <div id="col-done" class="kanban-col space-y-2.5"></div>
           </div>
+        </div>
+      </div>
+
+      <!-- RAPORLAR -->
+      <div id="view-reports" class="hidden">
+
+        <!-- Öğrenci: rapor gönderme + kendi raporları -->
+        <div id="reports-member" class="hidden max-w-4xl">
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
+            <h3 class="font-bold text-slate-800 mb-1"><i class="fas fa-cloud-arrow-up text-blue-500 mr-2"></i><span id="upload-card-title">Yeni Rapor Gönder</span></h3>
+            <p class="text-xs text-slate-400 mb-4">PDF veya Word (.pdf, .doc, .docx), en fazla 10 MB. Raporunuz yalnızca danışmana iletilir.</p>
+            <div id="upload-revision-info" class="hidden mb-3 text-xs bg-orange-50 border border-orange-200 text-orange-700 rounded-lg px-3 py-2"></div>
+            <div class="grid md:grid-cols-2 gap-3 mb-3">
+              <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Rapor Başlığı *</label>
+                <input id="report-title" placeholder="Örn: 3. Hafta İlerleme Raporu" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm"></div>
+              <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Not (isteğe bağlı)</label>
+                <input id="report-note" placeholder="Danışmana kısa bir not" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm"></div>
+            </div>
+            <label id="report-drop" for="report-file" class="block border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition">
+              <i id="report-file-icon" class="fas fa-file-arrow-up text-3xl text-slate-300 mb-2"></i>
+              <p id="report-file-label" class="text-sm text-slate-500">Dosyayı buraya sürükleyin veya <span class="text-blue-600 font-semibold">seçmek için tıklayın</span></p>
+              <input type="file" id="report-file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="hidden">
+            </label>
+            <div id="report-progress" class="hidden mt-3">
+              <div class="flex justify-between text-xs text-slate-500 mb-1"><span>Yükleniyor...</span><span id="report-progress-pct">%0</span></div>
+              <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div id="report-progress-bar" class="h-full bg-blue-500 transition-all" style="width:0%"></div></div>
+            </div>
+            <div class="flex justify-end gap-2 mt-4">
+              <button id="btn-cancel-revision" onclick="cancelRevision()" class="hidden border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition">Vazgeç</button>
+              <button id="btn-submit-report" onclick="submitReport()" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl px-5 py-2.5 text-sm font-semibold transition"><i class="fas fa-paper-plane mr-1.5"></i>Raporu Gönder</button>
+            </div>
+          </div>
+          <h3 class="text-sm font-semibold text-slate-600 mb-3">Gönderdiğim Raporlar</h3>
+          <div id="my-reports-list" class="space-y-3"></div>
+        </div>
+
+        <!-- Danışman: tüm raporlar -->
+        <div id="reports-admin" class="hidden">
+          <div id="reports-stats" class="flex gap-4 mb-5 flex-wrap"></div>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <input id="rep-filter-search" oninput="renderAdminReports()" placeholder="Öğrenci veya başlık ara..." class="border border-slate-200 rounded-lg px-3 py-1.5 text-sm bg-white w-56">
+            <select id="rep-filter-team" onchange="renderAdminReports()" class="border border-slate-200 rounded-lg px-3 py-1.5 text-sm bg-white text-slate-600"></select>
+            <select id="rep-filter-status" onchange="renderAdminReports()" class="border border-slate-200 rounded-lg px-3 py-1.5 text-sm bg-white text-slate-600">
+              <option value="">Tüm durumlar</option>
+              <option value="pending">Değerlendirme bekliyor</option>
+              <option value="revision">Revizyon istendi</option>
+              <option value="approved">Onaylandı</option>
+            </select>
+          </div>
+          <div id="admin-reports-list" class="space-y-3"></div>
         </div>
       </div>
     </div>
@@ -403,6 +467,53 @@
   </div>
 </div>
 
+<!-- MODAL: RAPOR DEĞERLENDİR -->
+<div id="modal-review" class="hidden fixed inset-0 modal-overlay z-40 flex items-center justify-center p-4 overflow-y-auto">
+  <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl fade-in my-auto">
+    <div class="flex items-center justify-between p-5 border-b border-slate-100">
+      <h3 class="font-bold text-slate-800">Raporu Değerlendir</h3>
+      <button onclick="closeModal('modal-review')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 space-y-4">
+      <div id="review-report-info" class="bg-slate-50 rounded-xl p-3 text-sm"></div>
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Karar</label>
+        <select id="review-status" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white">
+          <option value="approved">✅ Onaylandı</option>
+          <option value="revision">✏️ Revizyon istendi</option>
+        </select></div>
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Geri Bildirim *</label>
+        <textarea id="review-text" rows="5" placeholder="Raporla ilgili değerlendirmeniz, düzeltilmesi gereken noktalar..." class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm resize-y"></textarea></div>
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Geri Bildirim Dosyası (isteğe bağlı)</label>
+        <div id="review-existing-file" class="mb-2"></div>
+        <input type="file" id="review-file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="block w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-slate-100 file:text-slate-700 file:font-semibold hover:file:bg-slate-200">
+        <p class="text-xs text-slate-400 mt-1">Örn: yorum eklenmiş rapor. PDF veya Word, en fazla 10 MB.</p>
+      </div>
+      <div id="review-progress" class="hidden">
+        <div class="flex justify-between text-xs text-slate-500 mb-1"><span>Dosya yükleniyor...</span><span id="review-progress-pct">%0</span></div>
+        <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div id="review-progress-bar" class="h-full bg-blue-500 transition-all" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="p-5 pt-0 flex gap-3">
+      <button onclick="closeModal('modal-review')" class="flex-1 border border-slate-200 rounded-xl py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition">İptal</button>
+      <button id="btn-submit-review" onclick="submitReview()" class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl py-2.5 text-sm font-semibold transition"><i class="fas fa-paper-plane mr-1"></i> Geri Bildirimi Gönder</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ÜYELER (danışman) -->
+<div id="modal-members" class="hidden fixed inset-0 modal-overlay z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl fade-in">
+    <div class="flex items-center justify-between p-5 border-b border-slate-100">
+      <h3 class="font-bold text-slate-800">Takım Üyeleri</h3>
+      <button onclick="closeModal('modal-members')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5">
+      <p class="text-xs text-slate-400 mb-3">Kişisel şifresini unutan öğrencinin şifresini sıfırlayın. Öğrenci bir sonraki girişinde yeni şifre belirler.</p>
+      <div id="members-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
+    </div>
+  </div>
+</div>
+
 <!-- PANEL: BİLDİRİMLER -->
 <div id="panel-notif" class="hidden fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 flex flex-col slide-in">
   <div class="flex items-center justify-between p-5 border-b border-slate-100">
@@ -458,7 +569,13 @@ const state = {
   editingTaskDeps: [],
   editingTaskId: null,
   currentDetailTaskId: null,
-  currentDetailTeamId: null
+  currentDetailTeamId: null,
+  reports: {},          // {memberId: {reportId: rapor}}
+  feedback: {},         // {memberId: {reportId: geri bildirim}}
+  pendingReportFile: null,
+  revisionOf: null,
+  reviewing: null,
+  reviewRemoveFile: false
 };
 
 // FIREBASE INIT
@@ -562,6 +679,25 @@ async function adminLogin(code, pass) {
   return {ok:true, created:!exists, claimed};
 }
 
+// ÖĞRENCİ GİRİŞİ: kişisel şifre özeti memberSecrets altında (okunamaz) saklanır.
+// Tarayıcının kimliği (uid) ancak şifre özeti eşleşirse öğrenciye bağlanır;
+// raporlara erişim bu bağ üzerinden güvenlik kurallarıyla denetlenir.
+function memberHash(code, memberId, pin) { return sha256Hex('jellyfish-member:'+code+':'+memberId+':'+pin); }
+async function memberLogin(code, teamId, name, role, pin) {
+  const teams = await getClubTeams(code);
+  let member = null;
+  if (teams[teamId] && teams[teamId].members) {
+    member = Object.values(teams[teamId].members).find(m => (m.name||'').toLocaleLowerCase('tr')===name.toLocaleLowerCase('tr')) || null;
+  }
+  const memberId = member ? member.id : await addMember(teamId, {name, role, uid:state.uid}, code);
+  const hash = await memberHash(code, memberId, pin);
+  try { await dbSet('memberSecrets/'+code+'/'+memberId+'/hash', hash); }
+  catch(e) { if (!isPermErr(e)) throw e; } // şifre daha önce belirlenmiş → normal
+  try { await dbSet('clubs/'+code+'/memberUids/'+memberId+'/'+state.uid, hash); }
+  catch(e) { if (isPermErr(e)) return {ok:false}; throw e; }
+  return {ok:true, memberId, name: member ? member.name : name, role: member ? (member.role||role) : role};
+}
+
 // TEAMS
 async function createTeam(data) {
   return dbPush('clubs/'+state.clubCode+'/teams', {...data, createdAt:Date.now()});
@@ -653,6 +789,15 @@ async function startListeners() {
   const nRef = state.db.ref('clubs/'+state.clubCode+'/notifications');
   nRef.on('value', snap => { state.notifications = snap.exists()?snap.val():{}; renderNotifBadge(); if (!document.getElementById('panel-notif').classList.contains('hidden')) renderNotifPanel(); });
   state.firebaseListeners.push(() => nRef.off());
+  // Raporlar: danışman tümünü, öğrenci yalnızca kendininkini dinler (kurallar da bunu zorunlu kılar)
+  const mine = state.isAdmin ? '' : '/'+state.currentUser.id;
+  const wrap = v => state.isAdmin ? v : {[state.currentUser.id]: v};
+  const rRef = state.db.ref('clubs/'+state.clubCode+'/reports'+mine);
+  rRef.on('value', snap => { state.reports = wrap(snap.exists()?snap.val():{}); onReportsChanged(); }, e => console.error('reports', e));
+  state.firebaseListeners.push(() => rRef.off());
+  const fRef = state.db.ref('clubs/'+state.clubCode+'/feedback'+mine);
+  fRef.on('value', snap => { state.feedback = wrap(snap.exists()?snap.val():{}); onReportsChanged(); }, e => console.error('feedback', e));
+  state.firebaseListeners.push(() => fRef.off());
 }
 function stopListeners() { state.firebaseListeners.forEach(f=>f()); state.firebaseListeners=[]; }
 
@@ -704,17 +849,15 @@ async function handleLogin() {
       const name = document.getElementById('login-member-name').value.trim();
       const role = document.getElementById('login-member-role').value;
       const teamId = document.getElementById('login-team-select').value;
-      if (!name) { showLoginError('Adınızı girin.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-arrow-right-to-bracket mr-2"></i><span id="btn-login-text">Takıma Katıl</span>'; return; }
-      if (!teamId) { showLoginError('Takım seçin.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-arrow-right-to-bracket mr-2"></i><span id="btn-login-text">Takıma Katıl</span>'; return; }
-      if (!(await clubExists(code))) { showLoginError('Kulüp bulunamadı.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-arrow-right-to-bracket mr-2"></i><span id="btn-login-text">Takıma Katıl</span>'; return; }
-      let memberId = null;
-      const teams = await getClubTeams(code);
-      if (teams[teamId] && teams[teamId].members) {
-        const ex = Object.values(teams[teamId].members).find(m => (m.name||'').toLocaleLowerCase('tr')===name.toLocaleLowerCase('tr'));
-        if (ex) memberId = ex.id;
-      }
-      if (!memberId) memberId = await addMember(teamId, {name, role, uid:state.uid}, code);
-      state.clubCode=code; state.isAdmin=false; state.currentUser={id:memberId,name,role,teamId}; state.currentTeamId=teamId;
+      const pin = document.getElementById('login-member-pin').value;
+      const resetBtn = () => { btn.disabled=false; btn.innerHTML='<i class="fas fa-arrow-right-to-bracket mr-2"></i><span id="btn-login-text">Takıma Katıl</span>'; };
+      if (!name) { showLoginError('Adınızı girin.'); resetBtn(); return; }
+      if (!teamId) { showLoginError('Takım seçin.'); resetBtn(); return; }
+      if (pin.length < 4) { showLoginError('Kişisel şifre en az 4 karakter olmalı.'); resetBtn(); return; }
+      if (!(await clubExists(code))) { showLoginError('Kulüp bulunamadı.'); resetBtn(); return; }
+      const res = await memberLogin(code, teamId, name, role, pin);
+      if (!res.ok) { showLoginError('Kişisel şifre hatalı. Unuttuysanız danışmanınızdan sıfırlamasını isteyin.'); resetBtn(); return; }
+      state.clubCode=code; state.isAdmin=false; state.currentUser={id:res.memberId,name:res.name,role:res.role,teamId}; state.currentTeamId=teamId;
     }
     localStorage.setItem('jf_session', JSON.stringify({clubCode:state.clubCode,isAdmin:state.isAdmin,currentUser:state.currentUser,currentTeamId:state.currentTeamId}));
     startApp();
@@ -732,13 +875,16 @@ function showLoginError(msg) {
 
 function handleLogout() {
   stopListeners(); localStorage.removeItem('jf_session');
-  Object.assign(state,{clubCode:null,isAdmin:false,currentUser:null,currentTeamId:null,teams:{},notifications:{}});
+  Object.assign(state,{clubCode:null,isAdmin:false,currentUser:null,currentTeamId:null,teams:{},notifications:{},reports:{},feedback:{},revisionOf:null,pendingReportFile:null});
+  document.getElementById('login-member-pin').value='';
+  document.getElementById('login-admin-pass').value='';
   showScreen('screen-login');
 }
 
 // APP START
 function startApp() {
   showScreen('screen-app'); updateSidebarUser(); startListeners();
+  document.getElementById('nav-reports-label').textContent = state.isAdmin ? 'Raporlar' : 'Raporlarım';
   if (state.isAdmin) {
     document.getElementById('nav-admin').classList.remove('hidden');
     document.getElementById('btn-add-team').classList.remove('hidden');
@@ -763,16 +909,19 @@ function renderCurrentView() {
   if (document.getElementById('screen-app').classList.contains('hidden')) return;
   if (!document.getElementById('view-admin').classList.contains('hidden')) renderAdminDashboard();
   if (!document.getElementById('view-team').classList.contains('hidden') && state.currentTeamId) renderTeamKanban(state.currentTeamId);
+  if (!document.getElementById('view-reports').classList.contains('hidden')) renderReportsView();
 }
 
 function showAdminDashboard() {
   state.currentTeamId = null;
   document.getElementById('view-admin').classList.remove('hidden');
   document.getElementById('view-team').classList.add('hidden');
+  document.getElementById('view-reports').classList.add('hidden');
   document.getElementById('topbar-title').textContent = 'Genel Bakış';
   document.getElementById('topbar-sub').textContent = 'Tüm takımların durumu';
   document.getElementById('btn-add-task').classList.add('hidden');
   document.getElementById('btn-add-member').classList.add('hidden');
+  document.getElementById('btn-members').classList.add('hidden');
   document.getElementById('filter-assignee').classList.add('hidden');
   document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('nav-btn-dashboard')?.classList.add('active');
@@ -784,12 +933,13 @@ function showTeamView(teamId) {
   const team = state.teams[teamId];
   document.getElementById('view-admin').classList.add('hidden');
   document.getElementById('view-team').classList.remove('hidden');
+  document.getElementById('view-reports').classList.add('hidden');
   document.getElementById('topbar-title').textContent = team ? team.name : 'Takım';
   document.getElementById('topbar-sub').textContent = team ? (team.description||'') : '';
   document.getElementById('btn-add-task').classList.remove('hidden');
   document.getElementById('filter-assignee').classList.remove('hidden');
-  if (state.isAdmin) document.getElementById('btn-add-member').classList.remove('hidden');
-  else document.getElementById('btn-add-member').classList.add('hidden');
+  document.getElementById('btn-add-member').classList.toggle('hidden', !state.isAdmin);
+  document.getElementById('btn-members').classList.toggle('hidden', !state.isAdmin);
   document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('nav-team-'+teamId)?.classList.add('active');
   renderTeamKanban(teamId); renderFilterAssignee();
@@ -1105,19 +1255,402 @@ function renderNotifPanel() {
   const list=document.getElementById('notif-list');
   const notifs=getMyNotifs();
   if (!notifs.length) { list.innerHTML='<p class="text-center text-slate-400 text-sm pt-8">Bildirim yok</p>'; return; }
-  const icons={task_assigned:'fa-user-check text-blue-500',task_passed:'fa-share text-purple-500',dependency_resolved:'fa-check-circle text-green-500',task_completed:'fa-check text-green-500'};
-  list.innerHTML=notifs.map(n=>'<div class="flex gap-3 p-3 rounded-xl '+(n.read?'bg-slate-50':'bg-blue-50 border border-blue-100')+' cursor-pointer hover:bg-slate-100 transition" onclick="notifClick(\''+n.id+'\',\''+(n.relatedTeamId||'')+'\',\''+(n.relatedTaskId||'')+'\')">'
+  const icons={task_assigned:'fa-user-check text-blue-500',task_passed:'fa-share text-purple-500',dependency_resolved:'fa-check-circle text-green-500',task_completed:'fa-check text-green-500',report_submitted:'fa-file-arrow-up text-amber-500',report_feedback:'fa-comment-dots text-blue-500'};
+  list.innerHTML=notifs.map(n=>'<div class="flex gap-3 p-3 rounded-xl '+(n.read?'bg-slate-50':'bg-blue-50 border border-blue-100')+' cursor-pointer hover:bg-slate-100 transition" onclick="notifClick(\''+n.id+'\',\''+(n.relatedTeamId||'')+'\',\''+(n.relatedTaskId||'')+'\',\''+(n.relatedView||'')+'\')">'
     +'<div class="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center flex-shrink-0"><i class="fas '+(icons[n.type]||'fa-bell text-slate-400')+' text-xs"></i></div>'
     +'<div class="flex-1 min-w-0"><p class="text-xs text-slate-700 leading-relaxed">'+escHtml(n.message)+'</p><p class="text-xs text-slate-400 mt-1">'+timeAgo(n.createdAt)+'</p></div>'
     +(!n.read?'<div class="notif-dot mt-1.5 flex-shrink-0"></div>':'')
     +'</div>').join('');
 }
-function notifClick(notifId,teamId,taskId) {
+function notifClick(notifId,teamId,taskId,view) {
   markNotifRead(notifId); closeNotifPanel();
+  if (view==='reports') { showReportsView(); return; }
   if (teamId&&state.teams[teamId]) {
     showTeamView(teamId);
     if (taskId&&state.teams[teamId]?.tasks?.[taskId]) setTimeout(()=>openDetailModal(teamId,taskId),300);
   }
+}
+
+// ============================================================
+// RAPORLAR
+// Dosyalar Realtime Database'de parçalara bölünmüş (base64) olarak saklanır:
+//   reportFiles/KOD/ÜYE_ID/DOSYA_ID/{meta, chunks/0..n}
+// Rapor bilgisi:  clubs/KOD/reports/ÜYE_ID/RAPOR_ID
+// Geri bildirim:  clubs/KOD/feedback/ÜYE_ID/RAPOR_ID   (yalnızca danışman yazar)
+// Böylece Firebase Storage / ücretli plan gerekmez.
+// ============================================================
+const REPORT_MAX_BYTES = 10*1024*1024;
+const REPORT_CHUNK = 256*1024;
+const REPORT_EXTS = {pdf:'application/pdf', doc:'application/msword', docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'};
+const REPORT_STATUS = {
+  pending:  {label:'Değerlendirme bekliyor', cls:'bg-amber-100 text-amber-700',  icon:'fa-hourglass-half', box:'border-amber-400 bg-amber-50'},
+  approved: {label:'Onaylandı',              cls:'bg-green-100 text-green-700',  icon:'fa-circle-check',   box:'border-green-500 bg-green-50'},
+  revision: {label:'Revizyon istendi',       cls:'bg-orange-100 text-orange-700',icon:'fa-pen-to-square',  box:'border-orange-500 bg-orange-50'}
+};
+
+function fileExt(name) { const m=/\.([^.]+)$/.exec(name||''); return m?m[1].toLowerCase():''; }
+function validateReportFile(f) {
+  if (!f) return 'Lütfen bir dosya seçin.';
+  if (!REPORT_EXTS[fileExt(f.name)]) return 'Yalnızca PDF veya Word (.pdf, .doc, .docx) dosyası yüklenebilir.';
+  if (!f.size) return 'Dosya boş görünüyor.';
+  if (f.size > REPORT_MAX_BYTES) return 'Dosya 10 MB\'tan büyük olamaz ('+formatSize(f.size)+').';
+  return null;
+}
+function formatSize(b) { if (!b && b!==0) return ''; if (b<1024) return b+' B'; if (b<1048576) return (b/1024).toFixed(0)+' KB'; return (b/1048576).toFixed(1)+' MB'; }
+function fileIconCls(name) { return fileExt(name)==='pdf' ? 'fa-file-pdf text-red-500' : 'fa-file-word text-blue-600'; }
+function bytesToB64(u8) { let s=''; for (let i=0;i<u8.length;i+=0x8000) s+=String.fromCharCode.apply(null, u8.subarray(i,i+0x8000)); return btoa(s); }
+function b64ToBytes(b64) { const s=atob(b64); const u=new Uint8Array(s.length); for (let i=0;i<s.length;i++) u[i]=s.charCodeAt(i); return u; }
+function safeFileName(s) { return String(s||'').replace(/[\\/:*?"'`<>|&]+/g,'').replace(/\s+/g,'_').slice(0,60); }
+// İndirilen dosya adında Türkçe/aksanlı harfler bazı tarayıcılarda adın "download" olmasına yol açabiliyor
+function asciiFileName(s) {
+  const map = {'ş':'s','Ş':'S','ğ':'g','Ğ':'G','ı':'i','İ':'I','ö':'o','Ö':'O','ü':'u','Ü':'U','ç':'c','Ç':'C'};
+  return String(s||'').replace(/[şŞğĞıİöÖüÜçÇ]/g, c=>map[c]).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\x20-\x7E]/g,'_');
+}
+function filePath(memberId, fileId) { return 'reportFiles/'+state.clubCode+'/'+memberId+'/'+fileId; }
+
+async function uploadFileChunked(memberId, file, by, onProgress) {
+  await state.authReady;
+  const fileId = dbRef('reportFiles/'+state.clubCode+'/'+memberId).push().key;
+  const base = filePath(memberId, fileId);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const n = Math.max(1, Math.ceil(bytes.length/REPORT_CHUNK));
+  const type = REPORT_EXTS[fileExt(file.name)] || file.type || 'application/octet-stream';
+  try {
+    await dbSet(base+'/meta', {name:file.name, type, size:file.size, chunks:n, by, complete:false, at:Date.now()});
+    for (let i=0;i<n;i++) {
+      await dbSet(base+'/chunks/'+i, bytesToB64(bytes.subarray(i*REPORT_CHUNK,(i+1)*REPORT_CHUNK)));
+      if (onProgress) onProgress((i+1)/n);
+    }
+    await dbSet(base+'/meta/complete', true);
+  } catch(e) { try { await dbRef(base).remove(); } catch(_){} throw e; }
+  return {fileId, fileName:file.name, fileType:type, fileSize:file.size};
+}
+async function fetchFileBlob(memberId, fileId) {
+  const base = filePath(memberId, fileId);
+  const meta = await dbGet(base+'/meta');
+  if (!meta) throw new Error('Dosya bulunamadı.');
+  if (!meta.complete) throw new Error('Dosya yüklemesi tamamlanmamış.');
+  const chunks = (await dbGet(base+'/chunks')) || {};
+  const parts = [];
+  for (let i=0;i<meta.chunks;i++) { if (chunks[i]==null) throw new Error('Dosya eksik.'); parts.push(b64ToBytes(chunks[i])); }
+  return {blob:new Blob(parts,{type:meta.type||'application/octet-stream'}), meta};
+}
+async function downloadReportFile(memberId, fileId, mode, ownerName) {
+  // Açılır pencere engelini aşmak için pencereyi tıklama anında açıyoruz
+  const win = mode==='view' ? window.open('', '_blank') : null;
+  if (win) win.document.write('<p style="font-family:sans-serif;padding:2rem">Dosya hazırlanıyor...</p>');
+  else showToast('Dosya hazırlanıyor...','info');
+  try {
+    const {blob, meta} = await fetchFileBlob(memberId, fileId);
+    const url = URL.createObjectURL(blob);
+    if (win) { win.location.href = url; }
+    else {
+      const a = document.createElement('a'); a.href = url;
+      a.download = asciiFileName((ownerName ? safeFileName(ownerName)+'_' : '') + (meta.name||'rapor'));
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+    setTimeout(()=>URL.revokeObjectURL(url), 120000);
+  } catch(e) { if (win) win.close(); showToast('Dosya açılamadı: '+friendlyErr(e),'error'); }
+}
+
+function reportStatus(memberId, reportId) {
+  const fb = state.feedback[memberId] && state.feedback[memberId][reportId];
+  return fb ? (fb.status==='revision'?'revision':'approved') : 'pending';
+}
+function allReports() {
+  const out = [];
+  Object.entries(state.reports||{}).forEach(([mid, reps]) => {
+    Object.values(reps||{}).forEach(r => { if (r && r.id) out.push({r, mid, fb:(state.feedback[mid]||{})[r.id]||null, status:reportStatus(mid, r.id)}); });
+  });
+  return out.sort((a,b)=>(b.r.uploadedAt||0)-(a.r.uploadedAt||0));
+}
+function onReportsChanged() {
+  const badge = document.getElementById('nav-reports-badge');
+  const n = state.isAdmin ? allReports().filter(x=>x.status==='pending').length
+                          : allReports().filter(x=>x.status==='revision').length;
+  badge.textContent = n>9?'9+':n; badge.classList.toggle('hidden', n===0);
+  if (!document.getElementById('view-reports').classList.contains('hidden')) renderReportsView();
+}
+
+function showReportsView() {
+  document.getElementById('view-admin').classList.add('hidden');
+  document.getElementById('view-team').classList.add('hidden');
+  document.getElementById('view-reports').classList.remove('hidden');
+  document.getElementById('reports-admin').classList.toggle('hidden', !state.isAdmin);
+  document.getElementById('reports-member').classList.toggle('hidden', state.isAdmin);
+  document.getElementById('topbar-title').textContent = state.isAdmin ? 'Raporlar' : 'Raporlarım';
+  document.getElementById('topbar-sub').textContent = state.isAdmin ? 'Öğrencilerin gönderdiği raporlar' : 'Raporlarınızı gönderin, geri bildirimleri izleyin';
+  ['btn-add-task','btn-add-member','btn-members','filter-assignee'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-btn-reports').classList.add('active');
+  renderReportsView();
+}
+function renderReportsView() { if (state.isAdmin) renderAdminReports(); else renderMyReports(); }
+
+function statusBadge(st) { const s=REPORT_STATUS[st]; return '<span class="text-xs font-semibold px-2 py-0.5 rounded-full '+s.cls+'"><i class="fas '+s.icon+' mr-1"></i>'+s.label+'</span>'; }
+function btnHtml(onclick, icon, label, cls) {
+  return '<button onclick="'+onclick+'" class="'+(cls||'bg-slate-100 hover:bg-slate-200 text-slate-700')+' text-xs font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap"><i class="fas '+icon+(label?' mr-1':'')+'"></i>'+label+'</button>';
+}
+function feedbackBlock(mid, fb, ownerName) {
+  if (!fb) return '';
+  const st = fb.status==='revision'?'revision':'approved';
+  return '<div class="mt-3 rounded-lg border-l-4 '+REPORT_STATUS[st].box+' p-3">'
+    +'<div class="text-xs font-semibold text-slate-600 mb-1"><i class="fas fa-comment-dots mr-1"></i>Danışman geri bildirimi · <span class="font-normal text-slate-400">'+formatDatetime(fb.at)+'</span></div>'
+    +'<p class="text-sm text-slate-700 whitespace-pre-wrap">'+escHtml(fb.text||'')+'</p>'
+    +(fb.fileId?'<div class="mt-2 flex flex-wrap items-center gap-2"><span class="text-xs text-slate-500"><i class="fas '+fileIconCls(fb.fileName)+' mr-1"></i>'+escHtml(fb.fileName)+' · '+formatSize(fb.fileSize)+'</span>'
+      +(fileExt(fb.fileName)==='pdf'?btnHtml("downloadReportFile('"+mid+"','"+fb.fileId+"','view')",'fa-eye','Görüntüle','bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'):'')
+      +btnHtml("downloadReportFile('"+mid+"','"+fb.fileId+"','download','"+(ownerName?escHtml(safeFileName(ownerName))+"_geribildirim":"")+"')",'fa-download','İndir','bg-white hover:bg-slate-100 text-slate-700 border border-slate-200')+'</div>':'')
+    +'</div>';
+}
+
+// ---- Öğrenci ekranı ----
+function renderMyReports() {
+  const me = state.currentUser; if (!me) return;
+  const list = document.getElementById('my-reports-list');
+  const items = allReports();
+  if (!items.length) { list.innerHTML = '<div class="border-2 border-dashed border-slate-200 rounded-xl py-10 text-center text-slate-400 text-sm">Henüz rapor göndermediniz.</div>'; return; }
+  list.innerHTML = items.map(({r, mid, fb, status}) => {
+    const prev = r.revisionOf && state.reports[mid] && state.reports[mid][r.revisionOf];
+    let actions = '';
+    if (fileExt(r.fileName)==='pdf') actions += btnHtml("downloadReportFile('"+mid+"','"+r.fileId+"','view')",'fa-eye','Görüntüle');
+    actions += btnHtml("downloadReportFile('"+mid+"','"+r.fileId+"','download')",'fa-download','İndir');
+    if (status==='revision') actions += btnHtml("startRevision('"+r.id+"')",'fa-rotate','Revize sürüm yükle','bg-orange-500 hover:bg-orange-600 text-white');
+    if (status==='pending') actions += btnHtml("deleteReport('"+mid+"','"+r.id+"')",'fa-trash','','bg-red-50 hover:bg-red-100 text-red-500');
+    return '<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4">'
+      +'<div class="flex flex-col md:flex-row md:items-start gap-3">'
+      +'<div class="w-11 h-11 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0"><i class="fas '+fileIconCls(r.fileName)+' text-xl"></i></div>'
+      +'<div class="flex-1 min-w-0">'
+      +'<div class="flex items-center gap-2 flex-wrap"><span class="font-semibold text-slate-800">'+escHtml(r.title)+'</span>'+statusBadge(status)+'</div>'
+      +'<div class="text-xs text-slate-400 mt-0.5">'+escHtml(r.fileName)+' · '+formatSize(r.fileSize)+' · '+formatDatetime(r.uploadedAt)+'</div>'
+      +(prev?'<div class="text-xs text-slate-400 mt-0.5"><i class="fas fa-rotate mr-1"></i>"'+escHtml(prev.title)+'" raporunun revize sürümü</div>':'')
+      +(r.note?'<div class="text-xs text-slate-500 mt-1 italic">Notum: '+escHtml(r.note)+'</div>':'')
+      +'</div>'
+      +'<div class="flex flex-wrap gap-2 flex-shrink-0">'+actions+'</div>'
+      +'</div>'
+      +feedbackBlock(mid, fb)
+      +'</div>';
+  }).join('');
+}
+
+function setReportFile(f) {
+  state.pendingReportFile = f || null;
+  const label = document.getElementById('report-file-label');
+  const icon = document.getElementById('report-file-icon');
+  if (!f) {
+    label.innerHTML = 'Dosyayı buraya sürükleyin veya <span class="text-blue-600 font-semibold">seçmek için tıklayın</span>';
+    icon.className = 'fas fa-file-arrow-up text-3xl text-slate-300 mb-2'; return;
+  }
+  const err = validateReportFile(f);
+  if (err) { showToast(err,'error'); setReportFile(null); document.getElementById('report-file').value=''; return; }
+  icon.className = 'fas '+fileIconCls(f.name)+' text-3xl mb-2';
+  label.innerHTML = '<span class="font-semibold text-slate-700">'+escHtml(f.name)+'</span> <span class="text-slate-400">('+formatSize(f.size)+')</span><br><span class="text-xs text-blue-600">Değiştirmek için tıklayın</span>';
+}
+document.getElementById('report-file').addEventListener('change', e => setReportFile(e.target.files[0]));
+(function initDropZone(){
+  const z = document.getElementById('report-drop');
+  ['dragenter','dragover'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.add('border-blue-400','bg-blue-50'); }));
+  ['dragleave','drop'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.remove('border-blue-400','bg-blue-50'); }));
+  z.addEventListener('drop', e => { if (e.dataTransfer.files && e.dataTransfer.files[0]) setReportFile(e.dataTransfer.files[0]); });
+})();
+function setProgress(prefix, p) {
+  const wrap = document.getElementById(prefix+'-progress');
+  if (p===null) { wrap.classList.add('hidden'); return; }
+  wrap.classList.remove('hidden');
+  const pct = Math.round(p*100);
+  document.getElementById(prefix+'-progress-bar').style.width = pct+'%';
+  document.getElementById(prefix+'-progress-pct').textContent = '%'+pct;
+}
+function startRevision(reportId) {
+  const me = state.currentUser;
+  const r = state.reports[me.id] && state.reports[me.id][reportId]; if (!r) return;
+  state.revisionOf = reportId;
+  document.getElementById('upload-card-title').textContent = 'Revize Sürüm Gönder';
+  const info = document.getElementById('upload-revision-info');
+  info.innerHTML = '<i class="fas fa-rotate mr-1"></i>"<b>'+escHtml(r.title)+'</b>" raporunun düzeltilmiş sürümünü yüklüyorsunuz.';
+  info.classList.remove('hidden');
+  document.getElementById('btn-cancel-revision').classList.remove('hidden');
+  document.getElementById('report-title').value = r.title.replace(/\s*\(Revize( \d+)?\)$/,'')+' (Revize)';
+  document.getElementById('content').scrollTo({top:0, behavior:'smooth'});
+  document.getElementById('report-title').focus();
+}
+function cancelRevision() {
+  state.revisionOf = null;
+  document.getElementById('upload-card-title').textContent = 'Yeni Rapor Gönder';
+  document.getElementById('upload-revision-info').classList.add('hidden');
+  document.getElementById('btn-cancel-revision').classList.add('hidden');
+}
+async function submitReport() {
+  const me = state.currentUser; if (!me || state.isAdmin) return;
+  const title = document.getElementById('report-title').value.trim();
+  const note = document.getElementById('report-note').value.trim();
+  const f = state.pendingReportFile;
+  if (!title) { showToast('Rapor başlığı girin.','error'); return; }
+  const err = validateReportFile(f); if (err) { showToast(err,'error'); return; }
+  const btn = document.getElementById('btn-submit-report');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i>Gönderiliyor...';
+  let up = null;
+  try {
+    setProgress('report', 0);
+    up = await uploadFileChunked(me.id, f, 'member', p => setProgress('report', p));
+    const rRef = dbRef('clubs/'+state.clubCode+'/reports/'+me.id).push();
+    const team = state.teams[me.teamId];
+    const rep = {id:rRef.key, memberId:me.id, memberName:me.name, teamId:me.teamId||'', teamName:team?team.name:'', title, note, ...up, uploadedAt:Date.now()};
+    if (state.revisionOf) rep.revisionOf = state.revisionOf;
+    await rRef.set(rep);
+    up = null;
+    createNotification({targetMemberId:'__admin__', targetTeamId:me.teamId||'', message:'📄 '+me.name+' rapor gönderdi: "'+title+'"', type:'report_submitted', relatedView:'reports'}).catch(()=>{});
+    document.getElementById('report-title').value=''; document.getElementById('report-note').value='';
+    document.getElementById('report-file').value=''; setReportFile(null); cancelRevision();
+    showToast('Raporunuz danışmana gönderildi!','success');
+  } catch(e) {
+    console.error(e);
+    if (up) { try { await dbRef(filePath(me.id, up.fileId)).remove(); } catch(_){} }
+    showToast('Gönderilemedi: '+friendlyErr(e),'error');
+  } finally {
+    setProgress('report', null);
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-1.5"></i>Raporu Gönder';
+  }
+}
+async function deleteReport(memberId, reportId) {
+  const r = state.reports[memberId] && state.reports[memberId][reportId]; if (!r) return;
+  if (!confirm('"'+r.title+'" raporu silinsin mi?'+(state.isAdmin?' Varsa geri bildirimi de silinir.':''))) return;
+  try {
+    const fb = state.feedback[memberId] && state.feedback[memberId][reportId];
+    if (state.isAdmin && fb) {
+      await dbRef('clubs/'+state.clubCode+'/feedback/'+memberId+'/'+reportId).remove();
+      if (fb.fileId) await dbRef(filePath(memberId, fb.fileId)).remove().catch(()=>{});
+    }
+    await dbRef('clubs/'+state.clubCode+'/reports/'+memberId+'/'+reportId).remove();
+    if (r.fileId) await dbRef(filePath(memberId, r.fileId)).remove().catch(()=>{});
+    showToast('Rapor silindi.','info');
+  } catch(e) { showToast('Silinemedi: '+friendlyErr(e),'error'); }
+}
+
+// ---- Danışman ekranı ----
+function renderAdminReports() {
+  const all = allReports();
+  const tSel = document.getElementById('rep-filter-team');
+  const curTeam = tSel.value;
+  tSel.innerHTML = '<option value="">Tüm takımlar</option>' + Object.values(state.teams).map(t=>'<option value="'+t.id+'"'+(t.id===curTeam?' selected':'')+'>'+escHtml(t.name)+'</option>').join('');
+  const fTeam = tSel.value, fStatus = document.getElementById('rep-filter-status').value;
+  const q = document.getElementById('rep-filter-search').value.trim().toLocaleLowerCase('tr');
+  const cnt = s => all.filter(x=>x.status===s).length;
+  const stat = (n, label, cls) => '<div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-100 text-center min-w-[110px]"><div class="text-2xl font-bold '+cls+'">'+n+'</div><div class="text-xs text-slate-400">'+label+'</div></div>';
+  document.getElementById('reports-stats').innerHTML = stat(all.length,'Toplam Rapor','text-slate-800') + stat(cnt('pending'),'Bekleyen','text-amber-500') + stat(cnt('revision'),'Revizyon','text-orange-500') + stat(cnt('approved'),'Onaylanan','text-green-600');
+  let items = all.filter(x => (!fTeam || x.r.teamId===fTeam) && (!fStatus || x.status===fStatus)
+    && (!q || (x.r.memberName||'').toLocaleLowerCase('tr').includes(q) || (x.r.title||'').toLocaleLowerCase('tr').includes(q)));
+  items.sort((a,b) => (a.status==='pending'?0:1)-(b.status==='pending'?0:1) || (b.r.uploadedAt||0)-(a.r.uploadedAt||0));
+  const list = document.getElementById('admin-reports-list');
+  if (!items.length) { list.innerHTML = '<div class="border-2 border-dashed border-slate-200 rounded-xl py-12 text-center text-slate-400 text-sm">'+(all.length?'Filtreye uyan rapor yok.':'Henüz rapor gönderilmedi.')+'</div>'; return; }
+  list.innerHTML = items.map(({r, mid, fb, status}) => {
+    const team = state.teams[r.teamId]; const tc = team&&team.color ? team.color : '#94a3b8';
+    const prev = r.revisionOf && state.reports[mid] && state.reports[mid][r.revisionOf];
+    let actions = '';
+    if (fileExt(r.fileName)==='pdf') actions += btnHtml("downloadReportFile('"+mid+"','"+r.fileId+"','view')",'fa-eye','Görüntüle');
+    actions += btnHtml("downloadReportFile('"+mid+"','"+r.fileId+"','download','"+escHtml(safeFileName(r.memberName))+"')",'fa-download','İndir');
+    actions += btnHtml("openReviewModal('"+mid+"','"+r.id+"')", fb?'fa-pen':'fa-comment-dots', fb?'Düzenle':'Değerlendir', fb?'bg-slate-100 hover:bg-slate-200 text-slate-700':'bg-blue-600 hover:bg-blue-700 text-white');
+    actions += btnHtml("deleteReport('"+mid+"','"+r.id+"')",'fa-trash','','bg-red-50 hover:bg-red-100 text-red-500');
+    return '<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4">'
+      +'<div class="flex flex-col lg:flex-row lg:items-start gap-3">'
+      +'<div class="w-11 h-11 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0"><i class="fas '+fileIconCls(r.fileName)+' text-xl"></i></div>'
+      +'<div class="flex-1 min-w-0">'
+      +'<div class="flex items-center gap-2 flex-wrap"><span class="font-semibold text-slate-800">'+escHtml(r.title)+'</span>'+statusBadge(status)
+      +(prev?'<span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full"><i class="fas fa-rotate mr-1"></i>Revize sürüm</span>':'')+'</div>'
+      +'<div class="text-xs text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap"><i class="fas fa-user text-slate-300"></i><span class="font-medium">'+escHtml(r.memberName)+'</span>'
+      +'<span class="w-2 h-2 rounded-full inline-block ml-1" style="background:'+tc+'"></span>'+escHtml(team?team.name:(r.teamName||''))
+      +'<span class="text-slate-300">·</span>'+formatDatetime(r.uploadedAt)+'</div>'
+      +'<div class="text-xs text-slate-400 mt-0.5">'+escHtml(r.fileName)+' · '+formatSize(r.fileSize)+'</div>'
+      +(r.note?'<div class="text-xs text-slate-500 mt-1 italic">Öğrenci notu: '+escHtml(r.note)+'</div>':'')
+      +'</div>'
+      +'<div class="flex flex-wrap gap-2 flex-shrink-0">'+actions+'</div>'
+      +'</div>'
+      +feedbackBlock(mid, fb, r.memberName)
+      +'</div>';
+  }).join('');
+}
+
+function renderReviewExistingFile() {
+  const {memberId, reportId} = state.reviewing;
+  const fb = state.feedback[memberId] && state.feedback[memberId][reportId];
+  const el = document.getElementById('review-existing-file');
+  if (fb && fb.fileId && !state.reviewRemoveFile) {
+    el.innerHTML = '<div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs"><span><i class="fas '+fileIconCls(fb.fileName)+' mr-1"></i>'+escHtml(fb.fileName)+' · '+formatSize(fb.fileSize)+'</span>'
+      +'<button onclick="state.reviewRemoveFile=true;renderReviewExistingFile()" class="text-red-500 hover:underline">Kaldır</button></div>'
+      +'<p class="text-xs text-slate-400 mt-1">Yeni dosya seçerseniz bu dosyanın yerine geçer.</p>';
+  } else el.innerHTML = '';
+}
+function openReviewModal(memberId, reportId) {
+  const r = state.reports[memberId] && state.reports[memberId][reportId]; if (!r) return;
+  const fb = state.feedback[memberId] && state.feedback[memberId][reportId];
+  state.reviewing = {memberId, reportId}; state.reviewRemoveFile = false;
+  document.getElementById('review-report-info').innerHTML =
+    '<div class="font-semibold text-slate-800">'+escHtml(r.title)+'</div>'
+    +'<div class="text-xs text-slate-500 mt-0.5">'+escHtml(r.memberName)+' · '+escHtml(r.teamName||'')+' · '+formatDatetime(r.uploadedAt)+'</div>'
+    +'<div class="text-xs text-slate-400 mt-0.5"><i class="fas '+fileIconCls(r.fileName)+' mr-1"></i>'+escHtml(r.fileName)+'</div>';
+  document.getElementById('review-status').value = fb ? (fb.status||'approved') : 'approved';
+  document.getElementById('review-text').value = fb ? (fb.text||'') : '';
+  document.getElementById('review-file').value = '';
+  setProgress('review', null);
+  renderReviewExistingFile();
+  openModal('modal-review');
+}
+async function submitReview() {
+  if (!state.reviewing) return;
+  const {memberId, reportId} = state.reviewing;
+  const r = state.reports[memberId] && state.reports[memberId][reportId]; if (!r) return;
+  const old = state.feedback[memberId] && state.feedback[memberId][reportId];
+  const text = document.getElementById('review-text').value.trim();
+  const status = document.getElementById('review-status').value;
+  const f = document.getElementById('review-file').files[0];
+  if (!text) { showToast('Geri bildirim metni yazın.','error'); return; }
+  if (f) { const err = validateReportFile(f); if (err) { showToast(err,'error'); return; } }
+  const btn = document.getElementById('btn-submit-review');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Kaydediliyor...';
+  let up = null;
+  try {
+    let fileInfo = (old && old.fileId && !state.reviewRemoveFile) ? {fileId:old.fileId, fileName:old.fileName, fileType:old.fileType||'', fileSize:old.fileSize||0} : null;
+    if (f) { setProgress('review', 0); up = await uploadFileChunked(memberId, f, 'admin', p => setProgress('review', p)); fileInfo = up; }
+    const fbData = {text, status, at:Date.now(), ...(fileInfo||{})};
+    await dbSet('clubs/'+state.clubCode+'/feedback/'+memberId+'/'+reportId, fbData);
+    up = null;
+    if (old && old.fileId && (!fileInfo || fileInfo.fileId!==old.fileId)) await dbRef(filePath(memberId, old.fileId)).remove().catch(()=>{});
+    const msg = status==='approved' ? '✅ "'+r.title+'" raporun onaylandı. Geri bildirimi inceleyebilirsin.' : '✏️ "'+r.title+'" raporun için revizyon istendi. Geri bildirimi inceleyip revize sürüm yükle.';
+    createNotification({targetMemberId:memberId, targetTeamId:r.teamId||'', message:msg, type:'report_feedback', relatedView:'reports'}).catch(()=>{});
+    closeModal('modal-review'); showToast('Geri bildirim gönderildi!','success');
+  } catch(e) {
+    console.error(e);
+    if (up) { try { await dbRef(filePath(memberId, up.fileId)).remove(); } catch(_){} }
+    showToast('Kaydedilemedi: '+friendlyErr(e),'error');
+  } finally {
+    setProgress('review', null);
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Geri Bildirimi Gönder';
+  }
+}
+
+// ---- Üyeler / şifre sıfırlama (danışman) ----
+function openMembersModal() {
+  if (!state.isAdmin || !state.currentTeamId) return;
+  const members = getTeamMembers(state.currentTeamId);
+  const el = document.getElementById('members-list');
+  if (!members.length) el.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">Bu takımda üye yok.</p>';
+  else el.innerHTML = members.map(m => {
+    const nRep = Object.keys(state.reports[m.id]||{}).length;
+    return '<div class="flex items-center gap-3 bg-slate-50 rounded-lg px-3 py-2">'
+      +'<div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold">'+escHtml((m.name||'?')[0].toUpperCase())+'</div>'
+      +'<div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">'+escHtml(m.name)+'</div><div class="text-xs text-slate-400">'+escHtml(m.role||'')+' · '+nRep+' rapor</div></div>'
+      +'<button onclick="resetMemberPin(\''+m.id+'\')" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded-lg transition"><i class="fas fa-key mr-1"></i>Şifre sıfırla</button>'
+      +'</div>';
+  }).join('');
+  openModal('modal-members');
+}
+async function resetMemberPin(memberId) {
+  const name = getMemberName(state.currentTeamId, memberId);
+  if (!confirm(name+' adlı öğrencinin kişisel şifresi sıfırlansın mı? Öğrenci tüm cihazlarda yeniden giriş yapıp yeni şifre belirleyecek.')) return;
+  try {
+    await dbRef('memberSecrets/'+state.clubCode+'/'+memberId).remove();
+    await dbRef('clubs/'+state.clubCode+'/memberUids/'+memberId).remove();
+    showToast(name+' için şifre sıfırlandı.','success');
+  } catch(e) { showToast('Sıfırlanamadı: '+friendlyErr(e),'error'); }
 }
 
 // UTILS
@@ -1170,6 +1703,17 @@ window.addEventListener('load', () => {
           // Danışman oturumu ancak bu tarayıcının kimliği danışman olarak kayıtlıysa geri yüklenir
           const ok = await dbGet('clubs/'+s.clubCode+'/admins/'+state.uid).catch(()=>null);
           if (!ok) { localStorage.removeItem('jf_session'); showScreen('screen-login'); return; }
+        } else {
+          // Öğrenci oturumu ancak bu tarayıcı kişisel şifreyle öğrenciye bağlıysa geri yüklenir
+          const ok = s.currentUser && s.currentUser.id ? await dbGet('clubs/'+s.clubCode+'/memberUids/'+s.currentUser.id+'/'+state.uid).catch(()=>null) : null;
+          if (!ok) {
+            localStorage.removeItem('jf_session'); showScreen('screen-login'); setLoginTab('member');
+            document.getElementById('login-club-code').value = s.clubCode||'';
+            document.getElementById('login-member-name').value = (s.currentUser&&s.currentUser.name)||'';
+            if (s.clubCode) loadTeamsForLogin(s.clubCode).then(()=>{ if (s.currentTeamId) document.getElementById('login-team-select').value = s.currentTeamId; });
+            showToast('Yeni sürüm: lütfen bir kişisel şifre belirleyerek tekrar giriş yapın.','info');
+            return;
+          }
         }
         Object.assign(state,s); startApp();
       }).catch(() => showScreen('screen-login'));

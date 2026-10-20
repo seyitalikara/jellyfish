@@ -3,6 +3,8 @@
 Bu kurulum **bir kez** yapılır. Öğrencilerin hiçbir ayar yapmasına gerek kalmaz.
 
 > **Firebase projeniz zaten varsa** 1. ve 3. adımları atlayın. 2, 4, 5 ve 6. adımları mutlaka yapın.
+>
+> **v1.1'den v1.2'ye (rapor modülü) geçiyorsanız** yalnızca **5. adımı** (kuralları yeniden yükleme) yapın ve aşağıdaki [v1.2 güncelleme notları](#-v12-güncelleme-notları-rapor-modülü) bölümünü okuyun.
 
 ---
 
@@ -17,7 +19,7 @@ Bu kurulum **bir kez** yapılır. Öğrencilerin hiçbir ayar yapmasına gerek k
 1. **Build → Authentication → Get started**
 2. **Sign-in method** sekmesi → **Anonymous** → **Enable** → **Save**
 
-> Öğrenciler hesap açmaz. Uygulama her tarayıcıya arka planda otomatik bir kimlik verir. Güvenlik kuralları bu kimliği kullanır.
+> Öğrenciler e-posta hesabı açmaz. Uygulama her tarayıcıya arka planda otomatik bir kimlik verir. Öğrenci, kişisel şifresiyle bu kimliği kendi hesabına bağlar. Güvenlik kuralları bu kimliği kullanır.
 
 ## 3. Web uygulaması bilgilerini alın
 
@@ -50,6 +52,8 @@ Kaydedin. Artık uygulama açıldığında kurulum ekranı çıkmaz, doğrudan g
 3. `database.rules.json` dosyasının içeriğini yapıştırın → **Publish**
 
 > Eski kılavuzdaki `".read": true, ".write": true` kuralı veritabanını herkese açık bırakıyordu. Bu adımla o açık kapanır.
+>
+> `database.rules.json` her değiştiğinde (örneğin yeni sürüme geçerken) bu adımı tekrarlayın. Kurallar yüklenmezse rapor gönderme **"Bu işlem için yetkiniz yok"** hatası verir.
 
 ## 6. İlk danışman girişi
 
@@ -63,9 +67,20 @@ Ardından **Takım Oluştur** ile takımları kurun ve öğrencilere kulüp kodu
 
 ---
 
+## 📄 v1.2 güncelleme notları (rapor modülü)
+
+- **Kuralları yeniden yükleyin** (5. adım). Yeni kurallar `memberSecrets`, `reportFiles`, `memberUids`, `reports` ve `feedback` bölümlerini ekler.
+- **Öğrencilere kişisel şifre geldi.** Güncellemeden sonra uygulamayı açan öğrenciler bir kez giriş ekranına yönlendirilir. Adları ve takımları önceden doldurulur. Bir kişisel şifre belirleyip yeniden girerler. İlk yazılan şifre o öğrenciye kilitlenir.
+  - Öğrencilere duyurun: *"Uygulamaya ilk girişinizde kendi şifrenizi belirleyin. Başkası sizin adınızla sizden önce giriş yaparsa bana haber verin."* Böyle bir durumda **Üyeler → Şifre sıfırla** ile hesabı serbest bırakın.
+- **Dosyalar nerede saklanıyor?** Rapor dosyaları Firebase Storage'da değil, Realtime Database içinde parçalara bölünerek (`reportFiles/...`) saklanır. Böylece **kredi kartı / ücretli plan gerekmez.** Dosya sınırı 10 MB'tır.
+- **Kapasite (ücretsiz Spark planı):** 1 GB veritabanı alanı ve aylık 10 GB indirme. Dosyalar %33 büyüyerek saklanır. Örneğin 2 MB'lık raporlarla yaklaşık 350–400 rapor sığar. Alan dolmaya yaklaşırsa eski dönemlerin raporlarını uygulamadan silin ya da Firebase Console'dan `reportFiles` altını yedekleyip temizleyin. Kullanımı **Realtime Database → Usage** sekmesinden izleyebilirsiniz.
+
+---
+
 ## 👀 Görev dağılımını izleme
 
 - **Uygulamada:** Danışman olarak girince **Genel Bakış** ekranında tüm takımları, üyeleri ve görevlerin durumunu görürsünüz. Bir takıma tıklayınca o takımın Kanban panosu açılır.
+- **Raporlar:** Sol menüdeki **Raporlar** ekranında tüm öğrencilerin raporları, durumları ve verdiğiniz geri bildirimler durur.
 - **Firebase Console'da:** Realtime Database → **Data** sekmesinde `clubs/KULUP_KODU/teams` altında ham veri durur.
 - **Yedek:** Data sekmesi → sağ üstteki ⋮ menüsü → **Export JSON**
 
@@ -79,22 +94,30 @@ Ardından **Takım Oluştur** ile takımları kurun ve öğrencilere kulüp kodu
 | Görev ekleme / tamamlama / paslama | ✅ | ✅ |
 | Görev düzenleme ekranı | ✅ | ❌ |
 | Görev silme | ✅ | ❌ |
-| Danışman şifresini görme | ❌ (kimse göremez) | ❌ |
+| Rapor gönderme | — | ✅ (yalnızca kendi adına) |
+| Raporları görme / indirme | ✅ (tümü) | Yalnızca kendi raporları |
+| Geri bildirim yazma / dosya ekleme | ✅ | ❌ |
+| Rapor silme | ✅ | Yalnızca kendi raporu, değerlendirilmeden önce |
+| Öğrenci şifresini sıfırlama | ✅ | ❌ |
+| Danışman / öğrenci şifresini görme | ❌ (kimse göremez) | ❌ |
 
 ## ❓ Sık sorulan sorular
 
 **Danışman şifremi unuttum / değiştirmek istiyorum.**
 Firebase Console → Realtime Database → Data → `clubSecrets/KULUP_KODU` düğümünü silin. Ardından uygulamaya **yeni şifreyle** danışman olarak girin; yeni şifre kaydedilir. Bu işlemi yaptıktan hemen sonra giriş yapın.
 
+**Öğrenci kişisel şifresini unuttu.**
+Uygulamada takımı açın → **Üyeler** → öğrencinin yanında **Şifre sıfırla**. Öğrenci bir sonraki girişinde yeni şifre belirler. Raporları silinmez.
+
 **Bir öğrenci "Bu işlem için yetkiniz yok" hatası alıyor.**
-Görev silmek gibi danışmana ait bir işlem deniyordur. Bu beklenen bir davranış.
+Görev silmek gibi danışmana ait bir işlem deniyordur. Bu beklenen bir davranış. Rapor gönderirken bu hata çıkıyorsa güncel `database.rules.json` yüklenmemiştir (5. adım).
 
 **Uygulama "Anonim giriş kapalı" diyor.**
 2. adım yapılmamış. Authentication → Sign-in method → Anonymous'u açın.
 
 **Ücretsiz plan yeterli mi?**
-Spark planında 1 GB depolama, aylık 10 GB indirme ve 100 eş zamanlı bağlantı sınırı var. Bir kulüp için fazlasıyla yeterli.
+Spark planında 1 GB depolama, aylık 10 GB indirme ve 100 eş zamanlı bağlantı sınırı var. Bir kulübün görevleri ve dönemlik raporları için yeterli. Kapasite hesabı için yukarıdaki v1.2 notlarına bakın.
 
 ---
 
-*JellyFish v1.1 — Kulüp Görev Yönetimi*
+*JellyFish v1.2 — Kulüp Görev Yönetimi ve Rapor Takibi*
