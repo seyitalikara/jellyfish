@@ -215,6 +215,12 @@
         <button id="btn-add-member" onclick="openAddMemberModal()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
           <i class="fas fa-user-plus"></i> Üye Ekle
         </button>
+        <button id="btn-edit-team" onclick="openEditTeamModal(state.currentTeamId)" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5" title="Takım bilgilerini düzenle">
+          <i class="fas fa-pen"></i> Takımı Düzenle
+        </button>
+        <button id="btn-new-team" onclick="openCreateTeamModal()" class="hidden bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+          <i class="fas fa-plus"></i> Yeni Takım
+        </button>
         <button id="btn-members" onclick="openMembersModal()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
           <i class="fas fa-users"></i> Üyeler
         </button>
@@ -303,7 +309,7 @@
 <div id="modal-create-team" class="hidden fixed inset-0 modal-overlay z-40 flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl fade-in">
     <div class="flex items-center justify-between p-5 border-b border-slate-100">
-      <h3 class="font-bold text-slate-800">Yeni Takım Oluştur</h3>
+      <h3 id="modal-team-title" class="font-bold text-slate-800">Yeni Takım Oluştur</h3>
       <button onclick="closeModal('modal-create-team')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
     </div>
     <div class="p-5 space-y-4">
@@ -311,6 +317,7 @@
         <input id="team-name" placeholder="Teknofest 2025" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm"></div>
       <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Açıklama</label>
         <input id="team-desc" placeholder="İnsansız hava aracı takımı" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm"></div>
+      <div id="team-edit-info" class="hidden text-xs bg-blue-50 border border-blue-100 text-blue-700 rounded-lg px-3 py-2"><i class="fas fa-info-circle mr-1"></i>Üyeler, görevler ve raporlar korunur; yalnızca takım bilgileri değişir.</div>
       <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Renk</label>
         <div class="flex gap-2 flex-wrap" id="color-picker">
           <div onclick="selectTeamColor('#3b82f6')" class="color-opt w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow ring-2 ring-blue-500 ring-offset-2" style="background:#3b82f6" data-color="#3b82f6"></div>
@@ -321,13 +328,18 @@
           <div onclick="selectTeamColor('#ef4444')" class="color-opt w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow" style="background:#ef4444" data-color="#ef4444"></div>
           <div onclick="selectTeamColor('#06b6d4')" class="color-opt w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow" style="background:#06b6d4" data-color="#06b6d4"></div>
           <div onclick="selectTeamColor('#84cc16')" class="color-opt w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow" style="background:#84cc16" data-color="#84cc16"></div>
+          <label title="Özel renk" class="relative w-8 h-8 rounded-full cursor-pointer border-2 border-dashed border-slate-300 flex items-center justify-center text-slate-400 text-xs overflow-hidden">
+            <i class="fas fa-eye-dropper"></i>
+            <input type="color" id="team-color-custom" class="absolute inset-0 opacity-0 cursor-pointer" oninput="selectTeamColor(this.value)">
+          </label>
         </div>
         <input type="hidden" id="team-color" value="#3b82f6">
+        <input type="hidden" id="team-id-edit" value="">
       </div>
     </div>
     <div class="p-5 pt-0 flex gap-3">
       <button onclick="closeModal('modal-create-team')" class="flex-1 border border-slate-200 rounded-xl py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition">İptal</button>
-      <button onclick="submitCreateTeam()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2.5 text-sm font-semibold transition">Takımı Oluştur</button>
+      <button id="btn-submit-team" onclick="submitCreateTeam()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2.5 text-sm font-semibold transition">Takımı Oluştur</button>
     </div>
   </div>
 </div>
@@ -789,7 +801,7 @@ async function completeTask(teamId, taskId, taskData) {
   for (const nt of asList(task.notifyTeams)) {
     if (!nt || !nt.teamId || nt.teamId===teamId) continue;
     await createNotification({targetMemberId:'__team__'+nt.teamId, targetTeamId:nt.teamId, message:'✅ '+(myTeam?myTeam.name:'Bir takım')+': "'+task.title+'" tamamlandı. Sizin tarafınızda devam edebilirsiniz.', type:'dependency_resolved', relatedTeamId:nt.teamId});
-    showToast('"'+(nt.teamName||'Takım')+'" takımına bildirim gönderildi.','success');
+    showToast('"'+liveTeamName(nt.teamId,nt.teamName||'Takım')+'" takımına bildirim gönderildi.','success');
   }
   // Eski sürüm bağımlılıkları (görünen takımlar içinde)
   for (const [tId, team] of Object.entries(state.teams)) {
@@ -989,6 +1001,8 @@ function showAdminDashboard() {
   document.getElementById('btn-add-task').classList.add('hidden');
   document.getElementById('btn-add-member').classList.add('hidden');
   document.getElementById('btn-members').classList.add('hidden');
+  document.getElementById('btn-edit-team').classList.add('hidden');
+  document.getElementById('btn-new-team').classList.toggle('hidden', !state.isAdmin);
   document.getElementById('filter-assignee').classList.add('hidden');
   document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('nav-btn-dashboard')?.classList.add('active');
@@ -1008,6 +1022,8 @@ function showTeamView(teamId) {
   document.getElementById('filter-assignee').classList.remove('hidden');
   document.getElementById('btn-add-member').classList.toggle('hidden', !state.isAdmin);
   document.getElementById('btn-members').classList.toggle('hidden', !state.isAdmin);
+  document.getElementById('btn-edit-team').classList.toggle('hidden', !state.isAdmin);
+  document.getElementById('btn-new-team').classList.add('hidden');
   document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('nav-team-'+teamId)?.classList.add('active');
   renderTeamKanban(teamId); renderFilterAssignee();
@@ -1018,7 +1034,7 @@ function renderAdminDashboard() {
   const grid = document.getElementById('admin-teams-grid');
   const teams = Object.values(state.teams);
   if (!teams.length) {
-    grid.innerHTML = '<div class="col-span-3 text-center py-20"><div class="text-6xl mb-4">🪼</div><h3 class="text-xl font-bold text-slate-700 mb-2">Henüz takım yok</h3><p class="text-slate-400 mb-6">Sol menüdeki "+" butonu ile ilk takımı oluşturun.</p></div>';
+    grid.innerHTML = '<div class="col-span-3 text-center py-20"><div class="text-6xl mb-4">🪼</div><h3 class="text-xl font-bold text-slate-700 mb-2">Henüz takım yok</h3><p class="text-slate-400 mb-6">İlk takımınızı oluşturarak başlayın.</p><button onclick="openCreateTeamModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition"><i class="fas fa-plus mr-1.5"></i>Yeni Takım Oluştur</button></div>';
     return;
   }
   grid.innerHTML = teams.map(team => {
@@ -1036,8 +1052,10 @@ function renderAdminDashboard() {
       +'<div class="h-1.5" style="background:'+( team.color||'#3b82f6')+'"></div>'
       +'<div class="p-5">'
       +'<div class="flex items-start justify-between mb-3"><div><h3 class="font-bold text-slate-800">'+escHtml(team.name)+'</h3><p class="text-xs text-slate-400 mt-0.5">'+escHtml(team.description||'')+'</p></div>'
+      +'<div class="flex items-center gap-1.5 flex-shrink-0">'
       +(blocked>0?'<span class="blink text-xs bg-red-100 text-red-600 font-semibold px-2 py-1 rounded-full">⏸ '+blocked+' beklemede</span>':'')
-      +'</div>'
+      +'<button onclick="event.stopPropagation();openEditTeamModal(\''+team.id+'\')" title="Takımı düzenle" class="w-7 h-7 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"><i class="fas fa-pen text-xs"></i></button>'
+      +'</div></div>'
       +'<div class="grid grid-cols-4 gap-2 mb-4 text-center">'
       +'<div><div class="text-lg font-bold text-slate-500">'+todo+'</div><div class="text-xs text-slate-400">Yapılacak</div></div>'
       +'<div><div class="text-lg font-bold text-blue-600">'+inp+'</div><div class="text-xs text-slate-400">Devam</div></div>'
@@ -1156,16 +1174,50 @@ function selectTeamColor(color) {
   });
 }
 function openCreateTeamModal() {
+  if (!state.isAdmin) return;
+  document.getElementById('team-id-edit').value='';
+  document.getElementById('modal-team-title').textContent='Yeni Takım Oluştur';
+  document.getElementById('btn-submit-team').textContent='Takımı Oluştur';
+  document.getElementById('team-edit-info').classList.add('hidden');
   document.getElementById('team-name').value=''; document.getElementById('team-desc').value='';
   selectTeamColor('#3b82f6'); openModal('modal-create-team');
+  setTimeout(()=>document.getElementById('team-name').focus(), 50);
+}
+function openEditTeamModal(teamId) {
+  const team = state.teams[teamId]; if (!state.isAdmin || !team) return;
+  document.getElementById('team-id-edit').value=teamId;
+  document.getElementById('modal-team-title').textContent='Takımı Düzenle';
+  document.getElementById('btn-submit-team').textContent='Değişiklikleri Kaydet';
+  document.getElementById('team-edit-info').classList.remove('hidden');
+  document.getElementById('team-name').value=team.name||'';
+  document.getElementById('team-desc').value=team.description||'';
+  selectTeamColor(team.color||'#3b82f6'); openModal('modal-create-team');
 }
 async function submitCreateTeam() {
   const name = document.getElementById('team-name').value.trim();
+  const description = document.getElementById('team-desc').value.trim();
+  const editId = document.getElementById('team-id-edit').value;
   if (!name) { showToast('Takım adı boş olamaz.','error'); return; }
+  if (name.length > 60) { showToast('Takım adı en fazla 60 karakter olabilir.','error'); return; }
+  const dup = Object.values(state.teams).some(t => t.id!==editId && (t.name||'').trim().toLocaleLowerCase('tr')===name.toLocaleLowerCase('tr'));
+  if (dup) { showToast('"'+name+'" adında bir takım zaten var.','error'); return; }
+  const btn = document.getElementById('btn-submit-team'); btn.disabled = true;
   try {
-    await createTeam({name, description:document.getElementById('team-desc').value.trim(), color:selectedTeamColor});
-    closeModal('modal-create-team'); showToast('"'+name+'" takımı oluşturuldu!','success');
+    if (editId) {
+      await dbUpdate('clubs/'+state.clubCode+'/teams/'+editId, {name, description, color:selectedTeamColor, updatedAt:Date.now()});
+      await dbSet('clubs/'+state.clubCode+'/teamList/'+editId, {id:editId, name, color:selectedTeamColor}).catch(()=>{});
+      closeModal('modal-create-team'); showToast('Takım bilgileri güncellendi.','success');
+    } else {
+      await createTeam({name, description, color:selectedTeamColor});
+      closeModal('modal-create-team'); showToast('"'+name+'" takımı oluşturuldu!','success');
+    }
   } catch(e) { showToast('Hata: '+friendlyErr(e),'error'); }
+  finally { btn.disabled = false; }
+}
+// Takım adı değişince eski kayıtlarda saklı adı değil güncel adı göster
+function liveTeamName(teamId, fallback) {
+  const t = state.teams[teamId] || state.teamList[teamId];
+  return t && t.name ? t.name : (fallback||'');
 }
 
 // MODAL: ADD MEMBER
@@ -1203,7 +1255,7 @@ function openEditTaskModal(teamId, taskId) {
   document.getElementById('task-status').value=task.status||'todo';
   document.getElementById('task-id-edit').value=taskId;
   state.editingTaskId=taskId;
-  state.editingNotifyTeams=asList(task.notifyTeams).map(x=>({teamId:x.teamId, teamName:x.teamName}));
+  state.editingNotifyTeams=asList(task.notifyTeams).map(x=>({teamId:x.teamId, teamName:liveTeamName(x.teamId,x.teamName)}));
   populateTaskAssignees(teamId, taskAssignees(task));
   populateDepTeamSelect(); renderDepList(); closeModal('modal-detail'); openModal('modal-task');
 }
@@ -1236,7 +1288,7 @@ function addNotifyTeam() {
 function removeDep(i) { state.editingNotifyTeams.splice(i,1); renderDepList(); }
 function renderDepList() {
   const el=document.getElementById('dep-list');
-  el.innerHTML=state.editingNotifyTeams.map((d,i)=>'<div class="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-lg px-3 py-2"><span class="text-xs text-purple-700"><i class="fas fa-bell mr-1"></i>Bitince <strong>'+escHtml(d.teamName)+'</strong> takımına bildirim</span><button onclick="removeDep('+i+')" class="text-purple-400 hover:text-red-500 ml-2"><i class="fas fa-times"></i></button></div>').join('');
+  el.innerHTML=state.editingNotifyTeams.map((d,i)=>'<div class="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-lg px-3 py-2"><span class="text-xs text-purple-700"><i class="fas fa-bell mr-1"></i>Bitince <strong>'+escHtml(liveTeamName(d.teamId,d.teamName))+'</strong> takımına bildirim</span><button onclick="removeDep('+i+')" class="text-purple-400 hover:text-red-500 ml-2"><i class="fas fa-times"></i></button></div>').join('');
 }
 async function submitTask() {
   const title = document.getElementById('task-title').value.trim();
@@ -1340,7 +1392,7 @@ function renderDetail() {
   if (nts.length || deps.length) {
     document.getElementById('detail-deps').classList.remove('hidden');
     document.getElementById('detail-deps-list').innerHTML =
-      nts.map(d=>'<div class="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1"><i class="fas fa-bell mr-1"></i>'+escHtml(d.teamName)+'</div>').join('')
+      nts.map(d=>'<div class="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1"><i class="fas fa-bell mr-1"></i>'+escHtml(liveTeamName(d.teamId,d.teamName))+'</div>').join('')
       + deps.map(d=>'<div class="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1"><i class="fas fa-link mr-1"></i>'+escHtml(d.teamName)+' → <strong>'+escHtml(d.taskTitle)+'</strong></div>').join('');
   } else document.getElementById('detail-deps').classList.add('hidden');
   const history=asList(task.passHistory);
@@ -1619,7 +1671,7 @@ function showReportsView() {
   document.getElementById('reports-member').classList.toggle('hidden', state.isAdmin);
   document.getElementById('topbar-title').textContent = state.isAdmin ? 'Raporlar' : 'Raporlarım';
   document.getElementById('topbar-sub').textContent = state.isAdmin ? 'Öğrencilerin gönderdiği raporlar' : 'Raporlarınızı gönderin, geri bildirimleri izleyin';
-  ['btn-add-task','btn-add-member','btn-members','filter-assignee'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  ['btn-add-task','btn-add-member','btn-members','btn-edit-team','btn-new-team','filter-assignee'].forEach(id=>document.getElementById(id).classList.add('hidden'));
   document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('nav-btn-reports').classList.add('active');
   renderReportsView();
@@ -1824,7 +1876,7 @@ function openReviewModal(memberId, reportId) {
   state.reviewing = {memberId, reportId}; state.reviewRemoveFile = false;
   document.getElementById('review-report-info').innerHTML =
     '<div class="font-semibold text-slate-800">'+escHtml(r.title)+'</div>'
-    +'<div class="text-xs text-slate-500 mt-0.5">'+escHtml(r.memberName)+' · '+escHtml(r.teamName||'')+' · '+formatDatetime(r.uploadedAt)+'</div>'
+    +'<div class="text-xs text-slate-500 mt-0.5">'+escHtml(r.memberName)+' · '+escHtml(liveTeamName(r.teamId,r.teamName))+' · '+formatDatetime(r.uploadedAt)+'</div>'
     +'<div class="text-xs text-slate-400 mt-0.5"><i class="fas '+fileIconCls(r.fileName)+' mr-1"></i>'+escHtml(r.fileName)+'</div>';
   document.getElementById('review-status').value = fb ? (fb.status||'approved') : 'approved';
   document.getElementById('review-text').value = fb ? (fb.text||'') : '';

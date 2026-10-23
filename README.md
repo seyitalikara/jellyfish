@@ -38,6 +38,12 @@ Telefonda: bağlantıyı açın, ardından tarayıcı menüsünden "Ana ekrana e
 
 ## 🧑‍🏫 Danışman için
 
+### Takım ekleme ve düzenleme
+
+- **Yeni takım:** Genel Bakış ekranında sağ üstteki **Yeni Takım** düğmesine basın (sol menüdeki **+** da aynı işi yapar). Ad, açıklama ve renk girin.
+- **Takım bilgilerini güncelleme:** Genel Bakış'ta takım kartının köşesindeki ✏️ simgesine ya da takım sayfasında **Takımı Düzenle**'ye basın. Ad, açıklama ve renk değiştirilebilir. Üyeler, görevler ve raporlar olduğu gibi kalır.
+- Aynı adla ikinci bir takım açılamaz. Yeni ad öğrencilerin giriş ekranına hemen yansır.
+
 ### Raporları değerlendirme
 
 1. Sol menüden **Raporlar**'a tıklayın. Değerlendirilmeyi bekleyen rapor sayısı menüde turuncu rozetle görünür.

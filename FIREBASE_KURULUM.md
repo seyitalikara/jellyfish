@@ -103,7 +103,7 @@ Yenilikler:
 | İşlem | Danışman | Öğrenci |
 |---|:---:|:---:|
 | Takımları ve görevleri görme | ✅ (tümü) | Yalnızca kendi takımı |
-| Takım oluşturma | ✅ | ❌ |
+| Takım oluşturma / takım bilgilerini düzenleme | ✅ | ❌ |
 | Takıma üye ekleme | ✅ | Yalnızca kendini (katılırken) |
 | Görev ekleme / düzenleme / durum değiştirme / paslama | ✅ | Yalnızca kendi takımında |
 | Görev silme | ✅ | Yalnızca kendi oluşturduğu görev |
