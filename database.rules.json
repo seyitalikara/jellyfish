@@ -56,6 +56,24 @@
         }
       }
     },
+    "announcementFiles": {
+      "$code": {
+        "$annId": {
+          ".write": "auth != null && root.child('clubs').child($code).child('admins').child(auth.uid).exists()",
+          "$fileId": {
+            ".read": "auth != null && (root.child('clubs').child($code).child('admins').child(auth.uid).exists() || (root.child('clubs').child($code).child('uidTeam').child(auth.uid).exists() && data.child('meta').child('teams').child(root.child('clubs').child($code).child('uidTeam').child(auth.uid).val()).exists() && (root.child('clubs').child($code).child('uidMember').child(auth.uid).exists() && root.child('clubs').child($code).child('teams').child(root.child('clubs').child($code).child('uidTeam').child(auth.uid).val()).child('members').child(root.child('clubs').child($code).child('uidMember').child(auth.uid).val()).exists() && root.child('clubs').child($code).child('memberUids').child(root.child('clubs').child($code).child('uidMember').child(auth.uid).val()).child(auth.uid).exists())))",
+            "meta": {
+              ".validate": "newData.hasChildren(['name', 'size', 'chunks']) && newData.child('size').isNumber() && newData.child('size').val() <= 10485760 && newData.child('chunks').isNumber() && newData.child('chunks').val() <= 64"
+            },
+            "chunks": {
+              "$i": {
+                ".validate": "newData.isString() && newData.val().length <= 400000"
+              }
+            }
+          }
+        }
+      }
+    },
     "clubs": {
       "$code": {
         "id": {
@@ -145,6 +163,32 @@
         "teamList": {
           ".read": "auth != null",
           ".write": "auth != null && root.child('clubs').child($code).child('admins').child(auth.uid).exists()"
+        },
+        "uidTeam": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && newData.isString() && root.child('clubs').child($code).child('uidMember').child(auth.uid).exists() && root.child('clubs').child($code).child('teams').child(newData.val()).child('members').child(root.child('clubs').child($code).child('uidMember').child(auth.uid).val()).exists()"
+          }
+        },
+        "announcements": {
+          ".read": "auth != null && root.child('clubs').child($code).child('admins').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('clubs').child($code).child('admins').child(auth.uid).exists()",
+          "$teamId": {
+            ".read": "auth != null && (root.child('clubs').child($code).child('admins').child(auth.uid).exists() || (root.child('clubs').child($code).child('uidMember').child(auth.uid).exists() && root.child('clubs').child($code).child('teams').child($teamId).child('members').child(root.child('clubs').child($code).child('uidMember').child(auth.uid).val()).exists() && root.child('clubs').child($code).child('memberUids').child(root.child('clubs').child($code).child('uidMember').child(auth.uid).val()).child(auth.uid).exists()))",
+            "$annId": {
+              ".validate": "newData.hasChildren(['id', 'title', 'createdAt']) && newData.child('title').isString() && newData.child('title').val().length <= 200 && (!newData.child('text').exists() || newData.child('text').val().length <= 5000)"
+            }
+          }
+        },
+        "annSeen": {
+          ".read": "auth != null && root.child('clubs').child($code).child('admins').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('clubs').child($code).child('admins').child(auth.uid).exists()",
+          "$memberId": {
+            ".read": "auth != null && root.child('clubs').child($code).child('memberUids').child($memberId).child(auth.uid).exists()",
+            "$annId": {
+              ".write": "auth != null && newData.isNumber() && root.child('clubs').child($code).child('memberUids').child($memberId).child(auth.uid).exists()"
+            }
+          }
         }
       }
     }

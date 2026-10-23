@@ -180,6 +180,10 @@
           <i class="fas fa-file-lines w-4 text-center"></i> <span id="nav-reports-label">Raporlar</span>
           <span id="nav-reports-badge" class="hidden ml-auto bg-amber-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full leading-none"></span>
         </button>
+        <button onclick="showAnnounceView()" id="nav-btn-announce" class="sidebar-item w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-white/10 transition mt-1">
+          <i class="fas fa-bullhorn w-4 text-center"></i> <span>Duyurular</span>
+          <span id="nav-announce-badge" class="hidden ml-auto bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full leading-none"></span>
+        </button>
       </div>
       <div class="mb-1">
         <div class="flex items-center justify-between px-3 mb-1">
@@ -250,6 +254,60 @@
             <div id="col-done" class="kanban-col space-y-2.5" ondragover="onColDragOver(event)" ondragleave="onColDragLeave(event)" ondrop="onColDrop(event,'done')"></div>
           </div>
         </div>
+      </div>
+
+      <!-- DUYURULAR -->
+      <div id="view-announce" class="hidden max-w-4xl">
+        <!-- Danışman: duyuru gönder -->
+        <div id="announce-compose" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
+          <h3 class="font-bold text-slate-800 mb-3"><i class="fas fa-bullhorn text-blue-500 mr-2"></i>Takımlara Duyuru Gönder</h3>
+          <div class="grid grid-cols-2 gap-2 mb-4">
+            <button id="ann-type-popup" onclick="setAnnType('popup')" class="ann-type text-left border-2 rounded-xl px-4 py-3 transition">
+              <div class="font-semibold text-sm"><i class="fas fa-triangle-exclamation mr-1.5"></i>İkaz / Duyuru</div>
+              <div class="text-xs opacity-75 mt-0.5">Öğrencinin ekranında açılır pencere (pop-up) olarak çıkar</div>
+            </button>
+            <button id="ann-type-file" onclick="setAnnType('file')" class="ann-type text-left border-2 rounded-xl px-4 py-3 transition">
+              <div class="font-semibold text-sm"><i class="fas fa-folder-open mr-1.5"></i>Dosya Paylaşımı</div>
+              <div class="text-xs opacity-75 mt-0.5">Örn. geçmiş yılların raporları, şablonlar, yönergeler</div>
+            </button>
+          </div>
+          <div class="mb-3">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Kime</label>
+            <div id="ann-targets" class="flex flex-wrap gap-2"></div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-3 mb-3">
+            <div class="md:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Başlık *</label>
+              <input id="ann-title" maxlength="150" placeholder="Örn: Teknofest başvuru son tarihi" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm"></div>
+            <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Önem</label>
+              <select id="ann-level" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
+                <option value="info">🔵 Bilgi</option>
+                <option value="warning">🟠 Önemli</option>
+                <option value="urgent">🔴 Acil</option>
+              </select></div>
+          </div>
+          <div class="mb-3"><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Mesaj <span id="ann-text-req">*</span></label>
+            <textarea id="ann-text" rows="4" maxlength="4000" placeholder="Öğrencilere iletmek istediğiniz mesaj..." class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm resize-y"></textarea></div>
+          <div id="ann-files-box" class="mb-3">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Dosyalar <span id="ann-files-req"></span></label>
+            <label id="ann-drop" for="ann-file-input" class="block border-2 border-dashed border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition">
+              <i class="fas fa-file-arrow-up text-2xl text-slate-300 mb-1"></i>
+              <p class="text-sm text-slate-500">Dosyaları sürükleyin veya <span class="text-blue-600 font-semibold">seçmek için tıklayın</span></p>
+              <p class="text-xs text-slate-400 mt-0.5">En fazla 5 dosya, her biri en fazla 10 MB. PDF, Word, Excel, PowerPoint, resim, CAD, ZIP…</p>
+              <input type="file" id="ann-file-input" multiple class="hidden">
+            </label>
+            <div id="ann-file-list" class="space-y-1.5 mt-2"></div>
+          </div>
+          <label class="flex items-center gap-2 text-sm text-slate-600 mb-3 cursor-pointer"><input type="checkbox" id="ann-popup" class="w-4 h-4 accent-blue-600"> Öğrencilerin ekranında açılır pencere (pop-up) olarak göster</label>
+          <div id="ann-progress" class="hidden mb-3">
+            <div class="flex justify-between text-xs text-slate-500 mb-1"><span id="ann-progress-label">Yükleniyor...</span><span id="ann-progress-pct">%0</span></div>
+            <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div id="ann-progress-bar" class="h-full bg-blue-500 transition-all" style="width:0%"></div></div>
+          </div>
+          <div class="flex justify-end">
+            <button id="btn-send-ann" onclick="submitAnnouncement()" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl px-5 py-2.5 text-sm font-semibold transition"><i class="fas fa-paper-plane mr-1.5"></i>Gönder</button>
+          </div>
+        </div>
+        <h3 id="announce-list-title" class="text-sm font-semibold text-slate-600 mb-3">Duyurular</h3>
+        <div id="announce-list" class="space-y-3"></div>
       </div>
 
       <!-- RAPORLAR -->
@@ -541,6 +599,36 @@
   </div>
 </div>
 
+<!-- POP-UP: DUYURU (öğrenci) -->
+<div id="modal-ann-popup" class="hidden fixed inset-0 z-[55] flex items-center justify-center p-4" style="background:rgba(15,23,42,.6);backdrop-filter:blur(3px)">
+  <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl fade-in overflow-hidden">
+    <div id="ann-pop-head" class="px-5 py-4 text-white flex items-center gap-3">
+      <i id="ann-pop-icon" class="fas fa-bullhorn text-2xl"></i>
+      <div class="flex-1 min-w-0"><div id="ann-pop-kind" class="text-xs uppercase tracking-wider opacity-80">Duyuru</div><h3 id="ann-pop-title" class="font-bold text-lg leading-snug"></h3></div>
+      <span id="ann-pop-count" class="text-xs bg-white/20 rounded-full px-2 py-0.5"></span>
+    </div>
+    <div class="p-5 overflow-y-auto" style="max-height:55vh">
+      <p id="ann-pop-text" class="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed"></p>
+      <div id="ann-pop-files" class="space-y-1.5 mt-4"></div>
+      <p id="ann-pop-meta" class="text-xs text-slate-400 mt-4"></p>
+    </div>
+    <div class="px-5 pb-5 flex justify-end">
+      <button onclick="ackPopup()" class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 py-2.5 text-sm font-semibold transition"><i class="fas fa-check mr-1.5"></i>Okudum</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: KİMLER OKUDU (danışman) -->
+<div id="modal-ann-reads" class="hidden fixed inset-0 modal-overlay z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl fade-in">
+    <div class="flex items-center justify-between p-5 border-b border-slate-100">
+      <h3 id="ann-reads-title" class="font-bold text-slate-800">Okuma durumu</h3>
+      <button onclick="closeModal('modal-ann-reads')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="ann-reads-list" class="p-5 space-y-1.5 max-h-96 overflow-y-auto"></div>
+  </div>
+</div>
+
 <!-- PANEL: BİLDİRİMLER -->
 <div id="panel-notif" class="hidden fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 flex flex-col slide-in">
   <div class="flex items-center justify-between p-5 border-b border-slate-100">
@@ -599,6 +687,12 @@ const state = {
   editingTaskId: null,
   currentDetailTaskId: null,
   currentDetailTeamId: null,
+  announcements: {},    // {annId: duyuru}
+  annSeen: {},          // danışman: {memberId:{annId:ts}}, öğrenci: {annId:ts}
+  annLoaded: {a:false, s:false},
+  annFiles: [],
+  annType: 'popup',
+  popupShowing: null,
   reports: {},          // {memberId: {reportId: rapor}}
   feedback: {},         // {memberId: {reportId: geri bildirim}}
   pendingReportFile: null,
@@ -721,15 +815,16 @@ async function memberLogin(code, teamId, name, role, pin) {
   catch(e) { if (!isPermErr(e)) throw e; } // şifre daha önce belirlenmiş → normal
   try { await dbSet('clubs/'+code+'/memberUids/'+memberId+'/'+state.uid, hash); }
   catch(e) { if (isPermErr(e)) return {ok:false}; throw e; }
-  await bindUidToMember(code, memberId);
+  await bindUidToMember(code, memberId, teamId);
   return {ok:true, memberId, name: member ? member.name : name, role: member ? (member.role||role) : role};
 }
 
 // Bu tarayıcı kimliğinin hangi öğrenciye ait olduğunu kaydeder. Güvenlik kuralları
 // bu bilgiyle öğrencinin yalnızca KENDİ takımını görmesine ve düzenlemesine izin verir.
-async function bindUidToMember(code, memberId) {
+async function bindUidToMember(code, memberId, teamId) {
   try { await dbSet('clubs/'+code+'/uidMember/'+state.uid, memberId); }
   catch(e) { console.warn('uidMember yazılamadı (kurallar güncel değil mi?)', e); }
+  if (teamId) { try { await dbSet('clubs/'+code+'/uidTeam/'+state.uid, teamId); } catch(e) { console.warn('uidTeam yazılamadı', e); } }
 }
 
 // TEAMS
@@ -873,6 +968,26 @@ async function startListeners() {
   const fRef = state.db.ref('clubs/'+state.clubCode+'/feedback'+mine);
   fRef.on('value', snap => { state.feedback = wrap(snap.exists()?snap.val():{}); onReportsChanged(); }, e => console.error('feedback', e));
   state.firebaseListeners.push(() => fRef.off());
+  startAnnListeners();
+}
+function startAnnListeners() {
+  // Duyurular: danışman hepsini, öğrenci yalnızca kendi takımına gönderilenleri dinler
+  state.annLoaded = {a:false, s:false};
+  const aRef = state.db.ref('clubs/'+state.clubCode+'/announcements'+(state.isAdmin?'':'/'+state.currentTeamId));
+  aRef.on('value', snap => {
+    const v = snap.exists()?snap.val():{};
+    if (state.isAdmin) {
+      const all = {};
+      Object.values(v).forEach(byTeam => Object.values(byTeam||{}).forEach(a => { if (a && a.id && !all[a.id]) all[a.id] = a; }));
+      state.announcements = all;
+    } else state.announcements = v;
+    state.annLoaded.a = true; onAnnChanged();
+  }, e => console.warn('announcements', e));
+  state.firebaseListeners.push(() => aRef.off());
+  const sRef = state.db.ref('clubs/'+state.clubCode+'/annSeen'+(state.isAdmin?'':'/'+state.currentUser.id));
+  sRef.on('value', snap => { state.annSeen = Object.assign(state.isAdmin?{}:(state._annSeenLocal||{}), snap.exists()?snap.val():{}); state.annLoaded.s = true; onAnnChanged(); },
+    e => { console.warn('annSeen', e); state.annLoaded.s = true; onAnnChanged(); });
+  state.firebaseListeners.push(() => sRef.off());
 }
 function stopListeners() { state.firebaseListeners.forEach(f=>f()); state.firebaseListeners=[]; }
 
@@ -951,12 +1066,12 @@ function showLoginError(msg) {
 
 function handleLogout() {
   stopListeners(); localStorage.removeItem('jf_session');
-  Object.assign(state,{clubCode:null,isAdmin:false,currentUser:null,currentTeamId:null,teams:{},teamList:{},_teamListSynced:null,notifications:{},reports:{},feedback:{},revisionOf:null,pendingReportFile:null});
+  Object.assign(state,{clubCode:null,isAdmin:false,currentUser:null,currentTeamId:null,teams:{},teamList:{},_teamListSynced:null,notifications:{},announcements:{},annSeen:{},annLoaded:{a:false,s:false},annFiles:[],popupShowing:null,annTargets:null,reports:{},feedback:{},revisionOf:null,pendingReportFile:null});
   document.getElementById('login-member-pin').value='';
   document.getElementById('login-admin-pass').value='';
   const btn=document.getElementById('btn-login'); btn.disabled=false;
   btn.innerHTML='<i class="fas fa-arrow-right-to-bracket mr-2"></i><span id="btn-login-text">'+(loginTab==='admin'?'Danışman Olarak Gir':'Takıma Katıl')+'</span>';
-  closeModal('modal-detail'); closeModal('modal-task'); closeNotifPanel();
+  closeModal('modal-detail'); closeModal('modal-task'); closeModal('modal-ann-popup'); closeNotifPanel(); state._annSeenLocal = null;
   showScreen('screen-login');
 }
 
@@ -989,6 +1104,7 @@ function renderCurrentView() {
   if (!document.getElementById('view-admin').classList.contains('hidden')) renderAdminDashboard();
   if (!document.getElementById('view-team').classList.contains('hidden') && state.currentTeamId) renderTeamKanban(state.currentTeamId);
   if (!document.getElementById('view-reports').classList.contains('hidden')) renderReportsView();
+  if (!document.getElementById('view-announce').classList.contains('hidden')) renderAnnounceView();
 }
 
 function showAdminDashboard() {
@@ -996,6 +1112,7 @@ function showAdminDashboard() {
   document.getElementById('view-admin').classList.remove('hidden');
   document.getElementById('view-team').classList.add('hidden');
   document.getElementById('view-reports').classList.add('hidden');
+  document.getElementById('view-announce').classList.add('hidden');
   document.getElementById('topbar-title').textContent = 'Genel Bakış';
   document.getElementById('topbar-sub').textContent = 'Tüm takımların durumu';
   document.getElementById('btn-add-task').classList.add('hidden');
@@ -1016,6 +1133,7 @@ function showTeamView(teamId) {
   document.getElementById('view-admin').classList.add('hidden');
   document.getElementById('view-team').classList.remove('hidden');
   document.getElementById('view-reports').classList.add('hidden');
+  document.getElementById('view-announce').classList.add('hidden');
   document.getElementById('topbar-title').textContent = team ? team.name : 'Takım';
   document.getElementById('topbar-sub').textContent = team ? (team.description||'') : '';
   document.getElementById('btn-add-task').classList.remove('hidden');
@@ -1538,7 +1656,7 @@ function renderNotifPanel() {
   const list=document.getElementById('notif-list');
   const notifs=getMyNotifs();
   if (!notifs.length) { list.innerHTML='<p class="text-center text-slate-400 text-sm pt-8">Bildirim yok</p>'; return; }
-  const icons={task_assigned:'fa-user-check text-blue-500',task_passed:'fa-share text-purple-500',dependency_resolved:'fa-check-circle text-green-500',task_completed:'fa-check text-green-500',report_submitted:'fa-file-arrow-up text-amber-500',report_feedback:'fa-comment-dots text-blue-500'};
+  const icons={task_assigned:'fa-user-check text-blue-500',task_passed:'fa-share text-purple-500',dependency_resolved:'fa-check-circle text-green-500',task_completed:'fa-check text-green-500',report_submitted:'fa-file-arrow-up text-amber-500',announcement:'fa-bullhorn text-red-500',report_feedback:'fa-comment-dots text-blue-500'};
   list.innerHTML=notifs.map(n=>'<div class="flex gap-3 p-3 rounded-xl '+(n.read?'bg-slate-50':'bg-blue-50 border border-blue-100')+' cursor-pointer hover:bg-slate-100 transition" onclick="notifClick(\''+n.id+'\',\''+(n.relatedTeamId||'')+'\',\''+(n.relatedTaskId||'')+'\',\''+(n.relatedView||'')+'\')">'
     +'<div class="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center flex-shrink-0"><i class="fas '+(icons[n.type]||'fa-bell text-slate-400')+' text-xs"></i></div>'
     +'<div class="flex-1 min-w-0"><p class="text-xs text-slate-700 leading-relaxed">'+escHtml(n.message)+'</p><p class="text-xs text-slate-400 mt-1">'+timeAgo(n.createdAt)+'</p></div>'
@@ -1548,6 +1666,7 @@ function renderNotifPanel() {
 function notifClick(notifId,teamId,taskId,view) {
   markNotifRead(notifId); closeNotifPanel();
   if (view==='reports') { showReportsView(); return; }
+  if (view==='announcements') { showAnnounceView(); return; }
   if (teamId&&state.teams[teamId]) {
     showTeamView(teamId);
     if (taskId&&state.teams[teamId]?.tasks?.[taskId]) setTimeout(()=>openDetailModal(teamId,taskId),300);
@@ -1667,6 +1786,7 @@ function showReportsView() {
   document.getElementById('view-admin').classList.add('hidden');
   document.getElementById('view-team').classList.add('hidden');
   document.getElementById('view-reports').classList.remove('hidden');
+  document.getElementById('view-announce').classList.add('hidden');
   document.getElementById('reports-admin').classList.toggle('hidden', !state.isAdmin);
   document.getElementById('reports-member').classList.toggle('hidden', state.isAdmin);
   document.getElementById('topbar-title').textContent = state.isAdmin ? 'Raporlar' : 'Raporlarım';
@@ -1918,6 +2038,270 @@ async function submitReview() {
   }
 }
 
+
+// ============================================================
+// DUYURULAR
+//   clubs/KOD/announcements/TAKIM_ID/DUYURU_ID   (her hedef takıma bir kopya; öğrenci yalnız kendi takımınınkini okur)
+//   announcementFiles/KOD/DUYURU_ID/DOSYA_ID/{meta, chunks}   (meta.teams: hedef takımlar)
+//   clubs/KOD/annSeen/ÜYE_ID/DUYURU_ID = okunma zamanı
+// ============================================================
+const ANN_LEVEL = {
+  info:    {label:'Bilgi',  head:'#2563eb', badge:'bg-blue-100 text-blue-700',   icon:'fa-circle-info',          border:'border-blue-200'},
+  warning: {label:'Önemli', head:'#f59e0b', badge:'bg-amber-100 text-amber-700', icon:'fa-triangle-exclamation', border:'border-amber-300'},
+  urgent:  {label:'Acil',   head:'#dc2626', badge:'bg-red-100 text-red-700',     icon:'fa-bell',                 border:'border-red-300'}
+};
+const ANN_MAX_FILES = 5;
+function annLevel(a) { return ANN_LEVEL[a && a.level] || ANN_LEVEL.info; }
+function annList() { return Object.values(state.announcements||{}).filter(a=>a&&a.id).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); }
+function annSeenByMe(id) { return !!(state.annSeen && state.annSeen[id]); }
+function annFilePath(annId, fileId) { return 'announcementFiles/'+state.clubCode+'/'+annId+'/'+fileId; }
+function annTargetNames(a) { return asList(a.targets).map(tid => liveTeamName(tid, '?')); }
+
+function onAnnChanged() {
+  const badge = document.getElementById('nav-announce-badge');
+  const n = state.isAdmin ? 0 : annList().filter(a=>!annSeenByMe(a.id)).length;
+  badge.textContent = n>9?'9+':n; badge.classList.toggle('hidden', n===0);
+  if (!document.getElementById('view-announce').classList.contains('hidden')) renderAnnounceView();
+  if (!state.isAdmin) maybeShowPopup();
+}
+
+// ---- Öğrenci: açılır pencere ----
+function maybeShowPopup() {
+  if (state.isAdmin || !state.annLoaded.a || !state.annLoaded.s) return;
+  const cur = state.popupShowing;
+  if (cur && state.announcements[cur] && !annSeenByMe(cur)) return;
+  const queue = annList().filter(a => a.popup && !annSeenByMe(a.id)).reverse(); // en eskisinden başla
+  if (!queue.length) { state.popupShowing = null; closeModal('modal-ann-popup'); return; }
+  const a = queue[0], L = annLevel(a);
+  state.popupShowing = a.id;
+  document.getElementById('ann-pop-head').style.background = L.head;
+  document.getElementById('ann-pop-icon').className = 'fas '+L.icon+' text-2xl';
+  document.getElementById('ann-pop-kind').textContent = 'Danışman duyurusu · '+L.label;
+  document.getElementById('ann-pop-title').textContent = a.title||'';
+  document.getElementById('ann-pop-count').textContent = queue.length>1 ? '1 / '+queue.length : '';
+  document.getElementById('ann-pop-count').classList.toggle('hidden', queue.length<2);
+  document.getElementById('ann-pop-text').textContent = a.text||'';
+  document.getElementById('ann-pop-files').innerHTML = annFilesHtml(a);
+  document.getElementById('ann-pop-meta').textContent = formatDatetime(a.createdAt);
+  openModal('modal-ann-popup');
+}
+async function markAnnSeen(annId) {
+  if (state.isAdmin || !state.currentUser) return;
+  const ts = Date.now();
+  state._annSeenLocal = Object.assign(state._annSeenLocal||{}, {[annId]:ts}); // kurallar eskiyse bile tekrar tekrar çıkmasın
+  state.annSeen = Object.assign({}, state.annSeen, {[annId]:ts});
+  try { await dbSet('clubs/'+state.clubCode+'/annSeen/'+state.currentUser.id+'/'+annId, ts); }
+  catch(e) { console.warn('annSeen yazılamadı', e); }
+}
+async function ackPopup() {
+  const id = state.popupShowing; if (!id) { closeModal('modal-ann-popup'); return; }
+  await markAnnSeen(id);
+  state.popupShowing = null; closeModal('modal-ann-popup');
+  onAnnChanged();
+}
+
+function annFilesHtml(a) {
+  const files = asList(a.files);
+  if (!files.length) return '';
+  return files.map(f => '<div class="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">'
+    +'<i class="fas '+anyFileIcon(f.fileName)+' text-lg flex-shrink-0"></i>'
+    +'<div class="flex-1 min-w-0"><div class="text-xs font-medium text-slate-700 truncate" title="'+escHtml(f.fileName)+'">'+escHtml(f.fileName)+'</div><div class="text-[11px] text-slate-400">'+formatSize(f.fileSize)+'</div></div>'
+    +(TASK_VIEWABLE.includes(fileExt(f.fileName))?'<button onclick="downloadAnnFile(\''+a.id+'\',\''+f.fileId+'\',\'view\')" title="Görüntüle" class="text-slate-500 hover:text-blue-600 px-1.5"><i class="fas fa-eye"></i></button>':'')
+    +'<button onclick="downloadAnnFile(\''+a.id+'\',\''+f.fileId+'\',\'download\')" title="İndir" class="text-slate-500 hover:text-blue-600 px-1.5"><i class="fas fa-download"></i></button>'
+    +'</div>').join('');
+}
+async function downloadAnnFile(annId, fileId, mode) {
+  const a = state.announcements[annId];
+  const f = a && a.files && a.files[fileId];
+  await downloadFileAt(annFilePath(annId, fileId), mode, f ? f.fileName : null);
+}
+
+// ---- Görünüm ----
+function showAnnounceView() {
+  ['view-admin','view-team','view-reports'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('view-announce').classList.remove('hidden');
+  document.getElementById('announce-compose').classList.toggle('hidden', !state.isAdmin);
+  document.getElementById('topbar-title').textContent = 'Duyurular';
+  document.getElementById('topbar-sub').textContent = state.isAdmin ? 'Takımlara toplu ikaz ve dosya gönderin' : 'Danışmanınızın duyuruları ve paylaştığı dosyalar';
+  ['btn-add-task','btn-add-member','btn-members','btn-edit-team','btn-new-team','filter-assignee'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-btn-announce').classList.add('active');
+  if (state.isAdmin) { if (!state.annTargets) state.annTargets = 'all'; setAnnType(state.annType||'popup'); }
+  renderAnnounceView();
+  // Öğrenci sayfayı açınca açılır pencere olmayan (dosya) duyuruları okundu say
+  if (!state.isAdmin) annList().filter(a=>!a.popup && !annSeenByMe(a.id)).forEach(a=>markAnnSeen(a.id));
+}
+function renderAnnounceView() {
+  if (state.isAdmin) renderAnnTargets();
+  const list = document.getElementById('announce-list');
+  const items = annList();
+  document.getElementById('announce-list-title').textContent = state.isAdmin ? 'Gönderilen Duyurular ('+items.length+')' : 'Duyurular';
+  if (!items.length) { list.innerHTML = '<div class="border-2 border-dashed border-slate-200 rounded-xl py-10 text-center text-slate-400 text-sm">'+(state.isAdmin?'Henüz duyuru göndermediniz.':'Henüz duyuru yok.')+'</div>'; return; }
+  list.innerHTML = items.map(a => {
+    const L = annLevel(a);
+    const isNew = !state.isAdmin && !annSeenByMe(a.id);
+    let right = '';
+    if (state.isAdmin) {
+      const {seen, total} = annReadStats(a);
+      right = '<div class="flex items-center gap-2 flex-shrink-0">'
+        +'<button onclick="openAnnReads(\''+a.id+'\')" class="text-xs font-semibold px-3 py-2 rounded-lg transition '+(seen===total&&total?'bg-green-50 text-green-700 hover:bg-green-100':'bg-slate-100 text-slate-700 hover:bg-slate-200')+'"><i class="fas fa-eye mr-1"></i>'+seen+' / '+total+' okudu</button>'
+        +'<button onclick="deleteAnnouncement(\''+a.id+'\')" title="Sil" class="text-xs bg-red-50 hover:bg-red-100 text-red-500 px-3 py-2 rounded-lg transition"><i class="fas fa-trash"></i></button></div>';
+    } else if (a.popup && isNew) {
+      right = '<button onclick="markAnnSeen(\''+a.id+'\').then(onAnnChanged)" class="text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition flex-shrink-0"><i class="fas fa-check mr-1"></i>Okudum</button>';
+    }
+    return '<div class="bg-white rounded-xl border '+(isNew?L.border+' shadow':'border-slate-100 shadow-sm')+' p-4">'
+      +'<div class="flex flex-col md:flex-row md:items-start gap-3">'
+      +'<div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white" style="background:'+L.head+'"><i class="fas '+(a.kind==='file'?'fa-folder-open':L.icon)+'"></i></div>'
+      +'<div class="flex-1 min-w-0">'
+      +'<div class="flex items-center gap-2 flex-wrap"><span class="font-semibold text-slate-800">'+escHtml(a.title)+'</span>'
+      +'<span class="text-xs font-semibold px-2 py-0.5 rounded-full '+L.badge+'">'+L.label+'</span>'
+      +(a.kind==='file'?'<span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full"><i class="fas fa-paperclip mr-1"></i>'+asList(a.files).length+' dosya</span>':'')
+      +(a.popup?'<span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full"><i class="fas fa-window-maximize mr-1"></i>Pop-up</span>':'')
+      +(isNew?'<span class="text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">Yeni</span>':'')+'</div>'
+      +'<div class="text-xs text-slate-400 mt-0.5">'+formatDatetime(a.createdAt)+(state.isAdmin?' · <i class="fas fa-users mr-0.5"></i>'+escHtml(annTargetNames(a).join(', ')):'')+'</div>'
+      +(a.text?'<p class="text-sm text-slate-700 whitespace-pre-wrap mt-2">'+escHtml(a.text)+'</p>':'')
+      +(asList(a.files).length?'<div class="space-y-1.5 mt-3">'+annFilesHtml(a)+'</div>':'')
+      +'</div>'+right+'</div></div>';
+  }).join('');
+}
+
+// ---- Danışman: gönderme ----
+function setAnnType(t) {
+  state.annType = t;
+  ['popup','file'].forEach(k => {
+    const on = k===t;
+    document.getElementById('ann-type-'+k).className = 'ann-type text-left border-2 rounded-xl px-4 py-3 transition '+(on?'border-blue-500 bg-blue-50 text-blue-800':'border-slate-100 text-slate-500 hover:bg-slate-50');
+  });
+  document.getElementById('ann-popup').checked = (t==='popup');
+  document.getElementById('ann-text-req').textContent = t==='popup' ? '*' : '(isteğe bağlı)';
+  document.getElementById('ann-files-req').textContent = t==='file' ? '*' : '(isteğe bağlı)';
+  document.getElementById('ann-text').placeholder = t==='popup' ? 'Örn: Yarın saat 14:00\'te laboratuvarda toplantı var, herkesin katılması gerekiyor.' : 'Örn: 2024 ve 2025 Teknofest raporları ektedir, yazım düzeni için örnek alın.';
+}
+function annTeamIds() { return Object.values(state.teams).filter(t=>t&&t.id).map(t=>t.id); }
+function selectedAnnTargets() { return state.annTargets==='all' ? annTeamIds() : Array.from(state.annTargets||[]).filter(id=>state.teams[id]); }
+function renderAnnTargets() {
+  const el = document.getElementById('ann-targets');
+  const all = state.annTargets==='all';
+  const sel = all ? new Set() : (state.annTargets||new Set());
+  const chip = (on, label, onclick, color) => '<button onclick="'+onclick+'" class="text-xs font-semibold px-3 py-1.5 rounded-full border-2 transition '+(on?'border-blue-500 bg-blue-50 text-blue-700':'border-slate-200 text-slate-500 hover:bg-slate-50')+'">'
+    +(color?'<span class="inline-block w-2 h-2 rounded-full mr-1.5" style="background:'+color+'"></span>':'<i class="fas fa-users mr-1"></i>')+escHtml(label)+'</button>';
+  const teams = Object.values(state.teams).filter(t=>t&&t.id);
+  el.innerHTML = teams.length
+    ? chip(all, 'Tüm takımlar ('+teams.length+')', 'toggleAnnTarget(null)') + teams.map(t => chip(!all && sel.has(t.id), t.name, "toggleAnnTarget('"+t.id+"')", t.color||'#3b82f6')).join('')
+    : '<span class="text-xs text-slate-400">Önce takım oluşturun.</span>';
+}
+function toggleAnnTarget(teamId) {
+  if (!teamId) state.annTargets = 'all';
+  else {
+    const s = state.annTargets==='all' ? new Set() : new Set(state.annTargets||[]);
+    s.has(teamId) ? s.delete(teamId) : s.add(teamId);
+    state.annTargets = s.size ? s : 'all';
+  }
+  renderAnnTargets();
+}
+function addAnnFiles(fileList) {
+  for (const f of Array.from(fileList||[])) {
+    if (state.annFiles.length >= ANN_MAX_FILES) { showToast('En fazla '+ANN_MAX_FILES+' dosya eklenebilir.','warning'); break; }
+    const err = validateTaskFile(f); if (err) { showToast(f.name+': '+err,'error'); continue; }
+    if (state.annFiles.some(x=>x.name===f.name && x.size===f.size)) continue;
+    state.annFiles.push(f);
+  }
+  renderAnnFileList();
+}
+function removeAnnFile(i) { state.annFiles.splice(i,1); renderAnnFileList(); }
+function renderAnnFileList() {
+  document.getElementById('ann-file-list').innerHTML = state.annFiles.map((f,i) => '<div class="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">'
+    +'<i class="fas '+anyFileIcon(f.name)+' flex-shrink-0"></i><span class="text-xs font-medium text-slate-700 truncate flex-1">'+escHtml(f.name)+'</span><span class="text-[11px] text-slate-400">'+formatSize(f.size)+'</span>'
+    +'<button onclick="removeAnnFile('+i+')" class="text-slate-400 hover:text-red-500 px-1"><i class="fas fa-times"></i></button></div>').join('');
+}
+document.getElementById('ann-file-input').addEventListener('change', e => { addAnnFiles(e.target.files); e.target.value=''; });
+(function initAnnDrop(){
+  const z = document.getElementById('ann-drop');
+  ['dragenter','dragover'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.add('border-blue-400','bg-blue-50'); }));
+  ['dragleave','drop'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.remove('border-blue-400','bg-blue-50'); }));
+  z.addEventListener('drop', e => { if (e.dataTransfer.files) addAnnFiles(e.dataTransfer.files); });
+})();
+
+async function submitAnnouncement() {
+  if (!state.isAdmin) return;
+  const title = document.getElementById('ann-title').value.trim();
+  const text = document.getElementById('ann-text').value.trim();
+  const level = document.getElementById('ann-level').value;
+  const popup = document.getElementById('ann-popup').checked;
+  const kind = state.annType;
+  const targets = selectedAnnTargets();
+  if (!targets.length) { showToast('Duyurunun gideceği takımı seçin.','error'); return; }
+  if (!title) { showToast('Başlık yazın.','error'); return; }
+  if (kind==='popup' && !text) { showToast('İkaz için bir mesaj yazın.','error'); return; }
+  if (kind==='file' && !state.annFiles.length) { showToast('Paylaşılacak dosyayı ekleyin.','error'); return; }
+  const btn = document.getElementById('btn-send-ann');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i>Gönderiliyor...';
+  const annId = dbRef('clubs/'+state.clubCode+'/announcements').push().key;
+  const uploaded = [];
+  try {
+    const teamsObj = {}; targets.forEach(t => teamsObj[t] = true);
+    const files = {};
+    const nF = state.annFiles.length;
+    for (let i=0; i<nF; i++) {
+      const f = state.annFiles[i];
+      document.getElementById('ann-progress-label').textContent = 'Yükleniyor ('+(i+1)+'/'+nF+'): '+f.name;
+      setProgress('ann', i/nF);
+      const up = await uploadChunked('announcementFiles/'+state.clubCode+'/'+annId, f, TASK_MIME[fileExt(f.name)]||'application/octet-stream', {by:'admin', teams:teamsObj}, p => setProgress('ann', (i+p)/nF));
+      uploaded.push(up.fileId); files[up.fileId] = up;
+    }
+    const ann = {id:annId, title, text, level, popup, kind, targets, createdAt:Date.now(), by:'admin', ...(nF?{files}:{})};
+    const updates = {};
+    targets.forEach(t => { updates['clubs/'+state.clubCode+'/announcements/'+t+'/'+annId] = ann; });
+    await state.db.ref().update(updates);
+    for (const t of targets) await createNotification({targetMemberId:'__team__'+t, targetTeamId:t, message:'📢 Yeni duyuru: "'+title+'"', type:'announcement', relatedView:'announcements'}).catch(()=>{});
+    document.getElementById('ann-title').value=''; document.getElementById('ann-text').value='';
+    document.getElementById('ann-level').value='info';
+    state.annFiles = []; renderAnnFileList(); setAnnType(kind);
+    showToast('Duyuru '+targets.length+' takıma gönderildi.','success');
+  } catch(e) {
+    console.error(e);
+    for (const fid of uploaded) await dbRef(annFilePath(annId, fid)).remove().catch(()=>{});
+    showToast('Gönderilemedi: '+friendlyErr(e),'error');
+  } finally {
+    setProgress('ann', null);
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-1.5"></i>Gönder';
+  }
+}
+function annRecipients(a) {
+  const out = [];
+  asList(a.targets).forEach(tid => getTeamMembers(tid).forEach(m => out.push({m, teamId:tid})));
+  return out;
+}
+function annReadStats(a) {
+  const rec = annRecipients(a);
+  const seen = rec.filter(r => state.annSeen[r.m.id] && state.annSeen[r.m.id][a.id]).length;
+  return {seen, total:rec.length};
+}
+function openAnnReads(annId) {
+  const a = state.announcements[annId]; if (!a) return;
+  const rec = annRecipients(a).map(r => ({...r, at: state.annSeen[r.m.id] && state.annSeen[r.m.id][annId]}));
+  rec.sort((x,y) => (x.at?1:0)-(y.at?1:0) || (x.m.name||'').localeCompare(y.m.name||'','tr'));
+  document.getElementById('ann-reads-title').textContent = '"'+a.title+'" · '+rec.filter(r=>r.at).length+' / '+rec.length+' okudu';
+  document.getElementById('ann-reads-list').innerHTML = rec.length ? rec.map(r => '<div class="flex items-center gap-3 bg-slate-50 rounded-lg px-3 py-2">'
+    +'<span class="w-2 h-2 rounded-full flex-shrink-0" style="background:'+((state.teams[r.teamId]||{}).color||'#94a3b8')+'"></span>'
+    +'<div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">'+escHtml(r.m.name)+'</div><div class="text-xs text-slate-400">'+escHtml(liveTeamName(r.teamId))+'</div></div>'
+    +(r.at?'<span class="text-xs text-green-600"><i class="fas fa-check-double mr-1"></i>'+formatDatetime(r.at)+'</span>':'<span class="text-xs text-slate-400"><i class="fas fa-clock mr-1"></i>Okumadı</span>')
+    +'</div>').join('') : '<p class="text-sm text-slate-400 text-center py-6">Hedef takımlarda üye yok.</p>';
+  openModal('modal-ann-reads');
+}
+async function deleteAnnouncement(annId) {
+  const a = state.announcements[annId]; if (!a) return;
+  if (!confirm('"'+a.title+'" duyurusu'+(asList(a.files).length?' ve dosyaları':'')+' tüm takımlardan silinsin mi?')) return;
+  try {
+    const updates = {};
+    asList(a.targets).forEach(t => { updates['clubs/'+state.clubCode+'/announcements/'+t+'/'+annId] = null; });
+    Object.keys(state.annSeen||{}).forEach(mid => { if (state.annSeen[mid] && state.annSeen[mid][annId]) updates['clubs/'+state.clubCode+'/annSeen/'+mid+'/'+annId] = null; });
+    await state.db.ref().update(updates);
+    await dbRef('announcementFiles/'+state.clubCode+'/'+annId).remove().catch(()=>{});
+    showToast('Duyuru silindi.','info');
+  } catch(e) { showToast('Silinemedi: '+friendlyErr(e),'error'); }
+}
+
 // ---- Üyeler / şifre sıfırlama (danışman) ----
 function openMembersModal() {
   if (!state.isAdmin || !state.currentTeamId) return;
@@ -2005,7 +2389,7 @@ window.addEventListener('load', () => {
             showToast('Yeni sürüm: lütfen bir kişisel şifre belirleyerek tekrar giriş yapın.','info');
             return;
           }
-          await bindUidToMember(s.clubCode, s.currentUser.id);
+          await bindUidToMember(s.clubCode, s.currentUser.id, s.currentTeamId);
         }
         Object.assign(state,s); startApp();
       }).catch(() => showScreen('screen-login'));

@@ -22,6 +22,12 @@ Hiçbir şey indirmenize gerek yok.
 - Kendi oluşturduğunuz görevi detaydaki **Sil** ile silebilirsiniz.
 - **Bu görev bitince bildirim gönder** bölümünden başka bir takım seçerseniz, görev tamamlandığında o takıma haber gider.
 
+### 📢 Duyurular
+
+- Danışmanınız bir **ikaz** gönderdiğinde ekranınızda açılır pencere çıkar. **Okudum**'a basana kadar her girişte tekrar gösterilir.
+- Paylaşılan dosyalar (örneğin geçmiş yılların raporları) sol menüdeki **Duyurular** sayfasında durur; oradan görüntüleyip indirebilirsiniz.
+- Okunmamış duyuru sayısı menüde kırmızı rozetle görünür.
+
 ### 📄 Rapor gönderme
 
 1. Sol menüden **Raporlarım**'a tıklayın.
@@ -37,6 +43,19 @@ Hiçbir şey indirmenize gerek yok.
 Telefonda: bağlantıyı açın, ardından tarayıcı menüsünden "Ana ekrana ekle"yi seçin.
 
 ## 🧑‍🏫 Danışman için
+
+### Takımlara duyuru gönderme
+
+Sol menüden **Duyurular**'a tıklayın.
+
+1. Türü seçin:
+   - **İkaz / Duyuru:** Öğrencinin ekranında açılır pencere (pop-up) olarak çıkar. Öğrenci **Okudum** diyene kadar her girişte yeniden gösterilir. Mesaj zorunludur.
+   - **Dosya Paylaşımı:** Geçmiş yılların raporları, şablonlar, yönergeler gibi dosyalar için (en fazla 5 dosya, her biri en fazla 10 MB). İsterseniz bunu da pop-up olarak duyurabilirsiniz.
+2. **Kime:** Tüm takımlar ya da seçtiğiniz takımlar. Bir takıma gönderilen duyuruyu diğer takımlar görmez.
+3. Başlık, önem derecesi (Bilgi / Önemli / Acil) ve mesajı yazıp **Gönder**'e basın. Öğrencilere bildirim de gider.
+4. Gönderilen her duyurunun yanında **"X / Y okudu"** görünür. Tıklayınca kimin ne zaman okuduğu, kimin henüz okumadığı listelenir.
+
+> "Tüm takımlar" seçimi gönderme anındaki takımları kapsar. Sonradan açılan bir takım eski duyuruları görmez; gerekirse duyuruyu yeniden gönderin.
 
 ### Takım ekleme ve düzenleme
 
@@ -77,6 +96,7 @@ GitHub Pages ile yayınlama:
   - **Takım oluşturma ve üye ekleme** yalnızca danışmana açıktır.
   - Öğrenciler **yalnızca kendi takımlarının** görevlerini ve belgelerini görebilir, ekleyebilir ve güncelleyebilir. Başka takıma görev atanamaz.
   - Öğrenci yalnızca **kendi oluşturduğu görevi** ve **kendi yüklediği belgeyi** silebilir. Danışman hepsini silebilir.
+  - **Duyurular ve paylaşılan dosyalar** yalnızca hedeflenen takımların öğrencilerine açıktır. Duyuru göndermek ve silmek yalnızca danışmana açıktır.
   - **Raporlar ve dosyaları** yalnızca raporu gönderen öğrenci ve danışman tarafından okunabilir. Geri bildirimi yalnızca danışman yazabilir.
   - Danışman ve öğrenci şifreleri veritabanında açık metin olarak tutulmaz. Yalnızca SHA-256 özeti saklanır ve bu özeti kimse okuyamaz.
 - Kulüp kodunu yalnızca kendi öğrencilerinizle paylaşın.

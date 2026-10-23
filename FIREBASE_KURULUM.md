@@ -4,6 +4,8 @@ Bu kurulum **bir kez** yapılır. Öğrencilerin hiçbir ayar yapmasına gerek k
 
 > **Firebase projeniz zaten varsa** 1. ve 3. adımları atlayın. 2, 4, 5 ve 6. adımları mutlaka yapın.
 >
+> **v1.4'ten v1.5'e (duyurular) geçiyorsanız:** yalnızca **5. adımı** (kuralları yeniden yükleme) yapın. Yeni kurallar `announcements`, `announcementFiles`, `annSeen` ve `uidTeam` bölümlerini ekler. Kurallar yüklenmezse duyuru gönderilirken **"Bu işlem için yetkiniz yok"** hatası çıkar.
+>
 > **v1.2'den v1.3'e geçiyorsanız:** **5. adımı** (kuralları yeniden yükleme) yapın, ardından **bir kez danışman olarak giriş yapın**. Ayrıntılar: [v1.3 güncelleme notları](#-v13-güncelleme-notları-takım-gizliliği-çoklu-atama-belgeler).
 
 ---
@@ -113,6 +115,8 @@ Yenilikler:
 | Raporları görme / indirme | ✅ (tümü) | Yalnızca kendi raporları |
 | Geri bildirim yazma / dosya ekleme | ✅ | ❌ |
 | Rapor silme | ✅ | Yalnızca kendi raporu, değerlendirilmeden önce |
+| Duyuru / ikaz ve dosya gönderme, silme | ✅ | ❌ |
+| Duyuruları ve paylaşılan dosyaları görme | ✅ (tümü, kimin okuduğuyla) | Yalnızca kendi takımına gönderilenler |
 | Öğrenci şifresini sıfırlama | ✅ | ❌ |
 | Danışman / öğrenci şifresini görme | ❌ (kimse göremez) | ❌ |
 
@@ -135,4 +139,4 @@ Spark planında 1 GB depolama, aylık 10 GB indirme ve 100 eş zamanlı bağlant
 
 ---
 
-*JellyFish v1.3 — Kulüp Görev Yönetimi ve Rapor Takibi*
+*JellyFish v1.5 — Kulüp Görev Yönetimi ve Rapor Takibi*
