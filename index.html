@@ -222,6 +222,9 @@
         <button id="btn-edit-team" onclick="openEditTeamModal(state.currentTeamId)" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5" title="Takım bilgilerini düzenle">
           <i class="fas fa-pen"></i> Takımı Düzenle
         </button>
+        <button id="btn-announce" onclick="openAnnounceModal()" class="hidden bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow-sm" title="Takımlara duyuru, ikaz veya dosya gönder">
+          <i class="fas fa-bullhorn"></i> Duyuru Yap
+        </button>
         <button id="btn-new-team" onclick="openCreateTeamModal()" class="hidden bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
           <i class="fas fa-plus"></i> Yeni Takım
         </button>
@@ -232,6 +235,7 @@
     </div>
     <div id="content" class="flex-1 overflow-auto p-6">
       <div id="view-admin" class="hidden">
+        <div id="admin-announce-banner" class="mb-5"></div>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="admin-teams-grid"></div>
       </div>
       <div id="view-team" class="hidden">
@@ -258,53 +262,10 @@
 
       <!-- DUYURULAR -->
       <div id="view-announce" class="hidden max-w-4xl">
-        <!-- Danışman: duyuru gönder -->
-        <div id="announce-compose" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
-          <h3 class="font-bold text-slate-800 mb-3"><i class="fas fa-bullhorn text-blue-500 mr-2"></i>Takımlara Duyuru Gönder</h3>
-          <div class="grid grid-cols-2 gap-2 mb-4">
-            <button id="ann-type-popup" onclick="setAnnType('popup')" class="ann-type text-left border-2 rounded-xl px-4 py-3 transition">
-              <div class="font-semibold text-sm"><i class="fas fa-triangle-exclamation mr-1.5"></i>İkaz / Duyuru</div>
-              <div class="text-xs opacity-75 mt-0.5">Öğrencinin ekranında açılır pencere (pop-up) olarak çıkar</div>
-            </button>
-            <button id="ann-type-file" onclick="setAnnType('file')" class="ann-type text-left border-2 rounded-xl px-4 py-3 transition">
-              <div class="font-semibold text-sm"><i class="fas fa-folder-open mr-1.5"></i>Dosya Paylaşımı</div>
-              <div class="text-xs opacity-75 mt-0.5">Örn. geçmiş yılların raporları, şablonlar, yönergeler</div>
-            </button>
-          </div>
-          <div class="mb-3">
-            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Kime</label>
-            <div id="ann-targets" class="flex flex-wrap gap-2"></div>
-          </div>
-          <div class="grid md:grid-cols-3 gap-3 mb-3">
-            <div class="md:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Başlık *</label>
-              <input id="ann-title" maxlength="150" placeholder="Örn: Teknofest başvuru son tarihi" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm"></div>
-            <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Önem</label>
-              <select id="ann-level" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
-                <option value="info">🔵 Bilgi</option>
-                <option value="warning">🟠 Önemli</option>
-                <option value="urgent">🔴 Acil</option>
-              </select></div>
-          </div>
-          <div class="mb-3"><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Mesaj <span id="ann-text-req">*</span></label>
-            <textarea id="ann-text" rows="4" maxlength="4000" placeholder="Öğrencilere iletmek istediğiniz mesaj..." class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm resize-y"></textarea></div>
-          <div id="ann-files-box" class="mb-3">
-            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Dosyalar <span id="ann-files-req"></span></label>
-            <label id="ann-drop" for="ann-file-input" class="block border-2 border-dashed border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition">
-              <i class="fas fa-file-arrow-up text-2xl text-slate-300 mb-1"></i>
-              <p class="text-sm text-slate-500">Dosyaları sürükleyin veya <span class="text-blue-600 font-semibold">seçmek için tıklayın</span></p>
-              <p class="text-xs text-slate-400 mt-0.5">En fazla 5 dosya, her biri en fazla 10 MB. PDF, Word, Excel, PowerPoint, resim, CAD, ZIP…</p>
-              <input type="file" id="ann-file-input" multiple class="hidden">
-            </label>
-            <div id="ann-file-list" class="space-y-1.5 mt-2"></div>
-          </div>
-          <label class="flex items-center gap-2 text-sm text-slate-600 mb-3 cursor-pointer"><input type="checkbox" id="ann-popup" class="w-4 h-4 accent-blue-600"> Öğrencilerin ekranında açılır pencere (pop-up) olarak göster</label>
-          <div id="ann-progress" class="hidden mb-3">
-            <div class="flex justify-between text-xs text-slate-500 mb-1"><span id="ann-progress-label">Yükleniyor...</span><span id="ann-progress-pct">%0</span></div>
-            <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div id="ann-progress-bar" class="h-full bg-blue-500 transition-all" style="width:0%"></div></div>
-          </div>
-          <div class="flex justify-end">
-            <button id="btn-send-ann" onclick="submitAnnouncement()" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl px-5 py-2.5 text-sm font-semibold transition"><i class="fas fa-paper-plane mr-1.5"></i>Gönder</button>
-          </div>
+        <div id="announce-admin-top" class="hidden bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-5 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl flex-shrink-0"><i class="fas fa-bullhorn"></i></div>
+          <div class="flex-1"><div class="font-bold text-slate-800">Takımlara duyuru yapın</div><div class="text-sm text-slate-600">Pop-up ikaz ya da dosya (ör. geçmiş yılların raporları) gönderin, kimin okuduğunu takip edin.</div></div>
+          <button onclick="openAnnounceModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-5 py-3 rounded-xl transition whitespace-nowrap"><i class="fas fa-plus mr-1.5"></i>Yeni Duyuru</button>
         </div>
         <h3 id="announce-list-title" class="text-sm font-semibold text-slate-600 mb-3">Duyurular</h3>
         <div id="announce-list" class="space-y-3"></div>
@@ -599,6 +560,75 @@
   </div>
 </div>
 
+<!-- MODAL: DUYURU YAP (danışman) -->
+<div id="modal-announce" class="hidden fixed inset-0 modal-overlay z-40 flex items-start justify-center p-4 overflow-y-auto">
+  <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl fade-in my-6">
+    <div class="flex items-center justify-between p-5 border-b border-slate-100">
+      <h3 class="font-bold text-slate-800"><i class="fas fa-bullhorn text-amber-500 mr-2"></i>Duyuru Yap</h3>
+      <button onclick="closeModal('modal-announce')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5">
+          <div class="grid grid-cols-2 gap-2 mb-4">
+            <button id="ann-type-popup" onclick="setAnnType('popup')" class="ann-type text-left border-2 rounded-xl px-4 py-3 transition">
+              <div class="font-semibold text-sm"><i class="fas fa-triangle-exclamation mr-1.5"></i>İkaz / Duyuru</div>
+              <div class="text-xs opacity-75 mt-0.5">Öğrencinin ekranında açılır pencere (pop-up) olarak çıkar</div>
+            </button>
+            <button id="ann-type-file" onclick="setAnnType('file')" class="ann-type text-left border-2 rounded-xl px-4 py-3 transition">
+              <div class="font-semibold text-sm"><i class="fas fa-folder-open mr-1.5"></i>Dosya Paylaşımı</div>
+              <div class="text-xs opacity-75 mt-0.5">Örn. geçmiş yılların raporları, şablonlar, yönergeler</div>
+            </button>
+          </div>
+          <div class="mb-4">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Kime</label>
+            <div class="grid sm:grid-cols-2 gap-2">
+              <label id="ann-scope-all-box" class="flex items-center gap-3 border-2 rounded-xl px-4 py-3 cursor-pointer transition">
+                <input type="radio" name="ann-scope" id="ann-scope-all" value="all" class="w-4 h-4 accent-blue-600" onchange="setAnnScope('all')">
+                <div><div class="font-semibold text-sm text-slate-800"><i class="fas fa-users mr-1"></i>Tüm takımlar</div><div id="ann-scope-all-info" class="text-xs text-slate-500"></div></div>
+              </label>
+              <label id="ann-scope-some-box" class="flex items-center gap-3 border-2 rounded-xl px-4 py-3 cursor-pointer transition">
+                <input type="radio" name="ann-scope" id="ann-scope-some" value="some" class="w-4 h-4 accent-blue-600" onchange="setAnnScope('some')">
+                <div><div class="font-semibold text-sm text-slate-800"><i class="fas fa-list-check mr-1"></i>Seçtiğim takımlar</div><div class="text-xs text-slate-500">Bir veya birkaç takım</div></div>
+              </label>
+            </div>
+            <div id="ann-team-checks" class="hidden grid sm:grid-cols-2 gap-1.5 mt-2"></div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-3 mb-3">
+            <div class="md:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Başlık *</label>
+              <input id="ann-title" maxlength="150" placeholder="Örn: Teknofest başvuru son tarihi" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm"></div>
+            <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Önem</label>
+              <select id="ann-level" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
+                <option value="info">🔵 Bilgi</option>
+                <option value="warning">🟠 Önemli</option>
+                <option value="urgent">🔴 Acil</option>
+              </select></div>
+          </div>
+          <div class="mb-3"><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Mesaj <span id="ann-text-req">*</span></label>
+            <textarea id="ann-text" rows="4" maxlength="4000" placeholder="Öğrencilere iletmek istediğiniz mesaj..." class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm resize-y"></textarea></div>
+          <div id="ann-files-box" class="mb-3">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Dosyalar <span id="ann-files-req"></span></label>
+            <label id="ann-drop" for="ann-file-input" class="block border-2 border-dashed border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition">
+              <i class="fas fa-file-arrow-up text-2xl text-slate-300 mb-1"></i>
+              <p class="text-sm text-slate-500">Dosyaları sürükleyin veya <span class="text-blue-600 font-semibold">seçmek için tıklayın</span></p>
+              <p class="text-xs text-slate-400 mt-0.5">En fazla 5 dosya, her biri en fazla 10 MB. PDF, Word, Excel, PowerPoint, resim, CAD, ZIP…</p>
+              <input type="file" id="ann-file-input" multiple class="hidden">
+            </label>
+            <div id="ann-file-list" class="space-y-1.5 mt-2"></div>
+          </div>
+          <label class="flex items-center gap-2 text-sm text-slate-600 mb-3 cursor-pointer"><input type="checkbox" id="ann-popup" class="w-4 h-4 accent-blue-600"> Öğrencilerin ekranında açılır pencere (pop-up) olarak göster</label>
+          <div id="ann-progress" class="hidden mb-3">
+            <div class="flex justify-between text-xs text-slate-500 mb-1"><span id="ann-progress-label">Yükleniyor...</span><span id="ann-progress-pct">%0</span></div>
+            <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div id="ann-progress-bar" class="h-full bg-blue-500 transition-all" style="width:0%"></div></div>
+          </div>
+          <div id="ann-error" class="hidden mb-3 text-sm bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3"></div>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3 pt-3 border-t border-slate-100">
+            <div id="ann-summary" class="flex-1 text-sm text-slate-600"></div>
+            <button onclick="closeModal('modal-announce')" class="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition">İptal</button>
+            <button id="btn-send-ann" onclick="submitAnnouncement()" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl px-5 py-2.5 text-sm font-semibold transition"><i class="fas fa-paper-plane mr-1.5"></i>Gönder</button>
+          </div>
+    </div>
+  </div>
+</div>
+
 <!-- POP-UP: DUYURU (öğrenci) -->
 <div id="modal-ann-popup" class="hidden fixed inset-0 z-[55] flex items-center justify-center p-4" style="background:rgba(15,23,42,.6);backdrop-filter:blur(3px)">
   <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl fade-in overflow-hidden">
@@ -692,6 +722,8 @@ const state = {
   annLoaded: {a:false, s:false},
   annFiles: [],
   annType: 'popup',
+  annScope: 'all',
+  annPick: null,
   popupShowing: null,
   reports: {},          // {memberId: {reportId: rapor}}
   feedback: {},         // {memberId: {reportId: geri bildirim}}
@@ -1066,7 +1098,7 @@ function showLoginError(msg) {
 
 function handleLogout() {
   stopListeners(); localStorage.removeItem('jf_session');
-  Object.assign(state,{clubCode:null,isAdmin:false,currentUser:null,currentTeamId:null,teams:{},teamList:{},_teamListSynced:null,notifications:{},announcements:{},annSeen:{},annLoaded:{a:false,s:false},annFiles:[],popupShowing:null,annTargets:null,reports:{},feedback:{},revisionOf:null,pendingReportFile:null});
+  Object.assign(state,{clubCode:null,isAdmin:false,currentUser:null,currentTeamId:null,teams:{},teamList:{},_teamListSynced:null,notifications:{},announcements:{},annSeen:{},annLoaded:{a:false,s:false},annFiles:[],popupShowing:null,annScope:'all',annPick:null,reports:{},feedback:{},revisionOf:null,pendingReportFile:null});
   document.getElementById('login-member-pin').value='';
   document.getElementById('login-admin-pass').value='';
   const btn=document.getElementById('btn-login'); btn.disabled=false;
@@ -1079,6 +1111,7 @@ function handleLogout() {
 function startApp() {
   showScreen('screen-app'); updateSidebarUser(); startListeners();
   document.getElementById('nav-reports-label').textContent = state.isAdmin ? 'Raporlar' : 'Raporlarım';
+  document.getElementById('btn-announce').classList.toggle('hidden', !state.isAdmin);
   if (state.isAdmin) {
     document.getElementById('nav-admin').classList.remove('hidden');
     document.getElementById('btn-add-team').classList.remove('hidden');
@@ -1151,6 +1184,7 @@ function showTeamView(teamId) {
 function renderAdminDashboard() {
   const grid = document.getElementById('admin-teams-grid');
   const teams = Object.values(state.teams);
+  renderAnnounceBanner(teams.length);
   if (!teams.length) {
     grid.innerHTML = '<div class="col-span-3 text-center py-20"><div class="text-6xl mb-4">🪼</div><h3 class="text-xl font-bold text-slate-700 mb-2">Henüz takım yok</h3><p class="text-slate-400 mb-6">İlk takımınızı oluşturarak başlayın.</p><button onclick="openCreateTeamModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition"><i class="fas fa-plus mr-1.5"></i>Yeni Takım Oluştur</button></div>';
     return;
@@ -2062,6 +2096,7 @@ function onAnnChanged() {
   const n = state.isAdmin ? 0 : annList().filter(a=>!annSeenByMe(a.id)).length;
   badge.textContent = n>9?'9+':n; badge.classList.toggle('hidden', n===0);
   if (!document.getElementById('view-announce').classList.contains('hidden')) renderAnnounceView();
+  if (state.isAdmin && !document.getElementById('view-admin').classList.contains('hidden')) renderAnnounceBanner(annTeamIds().length);
   if (!state.isAdmin) maybeShowPopup();
 }
 
@@ -2116,17 +2151,31 @@ async function downloadAnnFile(annId, fileId, mode) {
   await downloadFileAt(annFilePath(annId, fileId), mode, f ? f.fileName : null);
 }
 
+// ---- Genel Bakış'taki duyuru şeridi ----
+function renderAnnounceBanner(nTeams) {
+  const el = document.getElementById('admin-announce-banner'); if (!el) return;
+  if (!state.isAdmin || !nTeams) { el.innerHTML = ''; return; }
+  const last = annList()[0];
+  let lastHtml = '<span class="text-slate-500">Henüz duyuru yapmadınız.</span>';
+  if (last) { const st = annReadStats(last); lastHtml = '<span class="text-slate-500">Son duyuru:</span> <b class="text-slate-700">'+escHtml(last.title)+'</b> <span class="text-slate-400">· '+timeAgo(last.createdAt)+' · '+st.seen+'/'+st.total+' okudu</span>'; }
+  el.innerHTML = '<div class="bg-white border border-amber-200 rounded-2xl px-5 py-4 flex flex-col md:flex-row md:items-center gap-3 shadow-sm">'
+    +'<div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0"><i class="fas fa-bullhorn"></i></div>'
+    +'<div class="flex-1 min-w-0 text-sm"><div class="font-semibold text-slate-800">Tüm takımlara duyuru</div><div class="truncate">'+lastHtml+'</div></div>'
+    +'<div class="flex gap-2 flex-shrink-0">'
+    +(last?'<button onclick="showAnnounceView()" class="text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg transition">Tümünü gör</button>':'')
+    +'<button onclick="openAnnounceModal()" class="text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition"><i class="fas fa-bullhorn mr-1.5"></i>Duyuru Yap</button></div></div>';
+}
+
 // ---- Görünüm ----
 function showAnnounceView() {
   ['view-admin','view-team','view-reports'].forEach(id=>document.getElementById(id).classList.add('hidden'));
   document.getElementById('view-announce').classList.remove('hidden');
-  document.getElementById('announce-compose').classList.toggle('hidden', !state.isAdmin);
+  document.getElementById('announce-admin-top').classList.toggle('hidden', !state.isAdmin);
   document.getElementById('topbar-title').textContent = 'Duyurular';
   document.getElementById('topbar-sub').textContent = state.isAdmin ? 'Takımlara toplu ikaz ve dosya gönderin' : 'Danışmanınızın duyuruları ve paylaştığı dosyalar';
   ['btn-add-task','btn-add-member','btn-members','btn-edit-team','btn-new-team','filter-assignee'].forEach(id=>document.getElementById(id).classList.add('hidden'));
   document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('nav-btn-announce').classList.add('active');
-  if (state.isAdmin) { if (!state.annTargets) state.annTargets = 'all'; setAnnType(state.annType||'popup'); }
   renderAnnounceView();
   // Öğrenci sayfayı açınca açılır pencere olmayan (dosya) duyuruları okundu say
   if (!state.isAdmin) annList().filter(a=>!a.popup && !annSeenByMe(a.id)).forEach(a=>markAnnSeen(a.id));
@@ -2178,26 +2227,61 @@ function setAnnType(t) {
   document.getElementById('ann-text').placeholder = t==='popup' ? 'Örn: Yarın saat 14:00\'te laboratuvarda toplantı var, herkesin katılması gerekiyor.' : 'Örn: 2024 ve 2025 Teknofest raporları ektedir, yazım düzeni için örnek alın.';
 }
 function annTeamIds() { return Object.values(state.teams).filter(t=>t&&t.id).map(t=>t.id); }
-function selectedAnnTargets() { return state.annTargets==='all' ? annTeamIds() : Array.from(state.annTargets||[]).filter(id=>state.teams[id]); }
-function renderAnnTargets() {
-  const el = document.getElementById('ann-targets');
-  const all = state.annTargets==='all';
-  const sel = all ? new Set() : (state.annTargets||new Set());
-  const chip = (on, label, onclick, color) => '<button onclick="'+onclick+'" class="text-xs font-semibold px-3 py-1.5 rounded-full border-2 transition '+(on?'border-blue-500 bg-blue-50 text-blue-700':'border-slate-200 text-slate-500 hover:bg-slate-50')+'">'
-    +(color?'<span class="inline-block w-2 h-2 rounded-full mr-1.5" style="background:'+color+'"></span>':'<i class="fas fa-users mr-1"></i>')+escHtml(label)+'</button>';
-  const teams = Object.values(state.teams).filter(t=>t&&t.id);
-  el.innerHTML = teams.length
-    ? chip(all, 'Tüm takımlar ('+teams.length+')', 'toggleAnnTarget(null)') + teams.map(t => chip(!all && sel.has(t.id), t.name, "toggleAnnTarget('"+t.id+"')", t.color||'#3b82f6')).join('')
-    : '<span class="text-xs text-slate-400">Önce takım oluşturun.</span>';
+function selectedAnnTargets() {
+  if (state.annScope !== 'some') return annTeamIds();
+  return Array.from(state.annPick||[]).filter(id=>state.teams[id]);
 }
-function toggleAnnTarget(teamId) {
-  if (!teamId) state.annTargets = 'all';
-  else {
-    const s = state.annTargets==='all' ? new Set() : new Set(state.annTargets||[]);
-    s.has(teamId) ? s.delete(teamId) : s.add(teamId);
-    state.annTargets = s.size ? s : 'all';
-  }
+function countStudents(teamIds) { return teamIds.reduce((n,id)=>n+getTeamMembers(id).length, 0); }
+function openAnnounceModal(preTeamId) {
+  if (!state.isAdmin) return;
+  if (!annTeamIds().length) { showToast('Önce en az bir takım oluşturun.','warning'); openCreateTeamModal(); return; }
+  state.annScope = preTeamId ? 'some' : 'all';
+  state.annPick = new Set(preTeamId ? [preTeamId] : []);
+  document.getElementById('ann-error').classList.add('hidden');
+  setAnnType(state.annType||'popup');
   renderAnnTargets();
+  openModal('modal-announce');
+  setTimeout(()=>document.getElementById('ann-title').focus(), 50);
+}
+function setAnnScope(sc) {
+  state.annScope = sc;
+  if (sc==='some' && !(state.annPick && state.annPick.size) && state.currentTeamId) state.annPick = new Set([state.currentTeamId]);
+  renderAnnTargets();
+}
+function toggleAnnPick(teamId, on) {
+  if (!state.annPick) state.annPick = new Set();
+  on ? state.annPick.add(teamId) : state.annPick.delete(teamId);
+  renderAnnTargets();
+}
+function renderAnnTargets() {
+  if (!document.getElementById('ann-scope-all')) return;
+  const some = state.annScope === 'some';
+  const ids = annTeamIds();
+  document.getElementById('ann-scope-all').checked = !some;
+  document.getElementById('ann-scope-some').checked = some;
+  document.getElementById('ann-scope-all-box').className = 'flex items-center gap-3 border-2 rounded-xl px-4 py-3 cursor-pointer transition '+(!some?'border-blue-500 bg-blue-50':'border-slate-200 hover:bg-slate-50');
+  document.getElementById('ann-scope-some-box').className = 'flex items-center gap-3 border-2 rounded-xl px-4 py-3 cursor-pointer transition '+(some?'border-blue-500 bg-blue-50':'border-slate-200 hover:bg-slate-50');
+  document.getElementById('ann-scope-all-info').textContent = ids.length+' takım · '+countStudents(ids)+' öğrenci';
+  const box = document.getElementById('ann-team-checks');
+  box.classList.toggle('hidden', !some);
+  const pick = state.annPick || new Set();
+  box.innerHTML = Object.values(state.teams).filter(t=>t&&t.id).map(t => '<label class="flex items-center gap-2.5 px-3 py-2 rounded-lg border '+(pick.has(t.id)?'border-blue-300 bg-blue-50':'border-slate-200')+' cursor-pointer text-sm">'
+    +'<input type="checkbox" class="w-4 h-4 accent-blue-600" '+(pick.has(t.id)?'checked ':'')+'onchange="toggleAnnPick(\''+t.id+'\',this.checked)">'
+    +'<span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:'+(t.color||'#3b82f6')+'"></span>'
+    +'<span class="flex-1 truncate font-medium text-slate-700">'+escHtml(t.name)+'</span><span class="text-xs text-slate-400">'+getTeamMembers(t.id).length+' kişi</span></label>').join('');
+  const targets = selectedAnnTargets(), n = countStudents(targets);
+  const sum = document.getElementById('ann-summary');
+  if (!targets.length) sum.innerHTML = '<span class="text-red-500"><i class="fas fa-circle-exclamation mr-1"></i>En az bir takım seçin.</span>';
+  else sum.innerHTML = '<i class="fas fa-paper-plane text-blue-500 mr-1"></i><b>'+targets.length+'</b> takımdaki <b>'+n+'</b> öğrenciye gidecek'
+    +(some?': <span class="text-slate-500">'+escHtml(targets.map(id=>liveTeamName(id)).join(', '))+'</span>':'.')
+    +(n===0?'<div class="text-xs text-amber-600 mt-0.5">Bu takımlarda henüz öğrenci yok; katılan öğrenciler duyuruyu yine de görür.</div>':'');
+  const btn = document.getElementById('btn-send-ann');
+  if (!btn.disabled) btn.innerHTML = '<i class="fas fa-paper-plane mr-1.5"></i>'+(some?'Seçili takımlara gönder':'Tüm takımlara gönder');
+}
+function annErr(msg) {
+  const el = document.getElementById('ann-error');
+  if (!msg) { el.classList.add('hidden'); return; }
+  el.innerHTML = msg; el.classList.remove('hidden');
 }
 function addAnnFiles(fileList) {
   for (const f of Array.from(fileList||[])) {
@@ -2230,10 +2314,11 @@ async function submitAnnouncement() {
   const popup = document.getElementById('ann-popup').checked;
   const kind = state.annType;
   const targets = selectedAnnTargets();
-  if (!targets.length) { showToast('Duyurunun gideceği takımı seçin.','error'); return; }
-  if (!title) { showToast('Başlık yazın.','error'); return; }
-  if (kind==='popup' && !text) { showToast('İkaz için bir mesaj yazın.','error'); return; }
-  if (kind==='file' && !state.annFiles.length) { showToast('Paylaşılacak dosyayı ekleyin.','error'); return; }
+  annErr(null);
+  if (!targets.length) { annErr('<i class="fas fa-circle-exclamation mr-1"></i>Duyurunun gideceği takımı seçin.'); return; }
+  if (!title) { annErr('<i class="fas fa-circle-exclamation mr-1"></i>Başlık yazın.'); document.getElementById('ann-title').focus(); return; }
+  if (kind==='popup' && !text) { annErr('<i class="fas fa-circle-exclamation mr-1"></i>İkaz için bir mesaj yazın.'); document.getElementById('ann-text').focus(); return; }
+  if (kind==='file' && !state.annFiles.length) { annErr('<i class="fas fa-circle-exclamation mr-1"></i>Paylaşılacak dosyayı ekleyin.'); return; }
   const btn = document.getElementById('btn-send-ann');
   btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i>Gönderiliyor...';
   const annId = dbRef('clubs/'+state.clubCode+'/announcements').push().key;
@@ -2257,14 +2342,17 @@ async function submitAnnouncement() {
     document.getElementById('ann-title').value=''; document.getElementById('ann-text').value='';
     document.getElementById('ann-level').value='info';
     state.annFiles = []; renderAnnFileList(); setAnnType(kind);
-    showToast('Duyuru '+targets.length+' takıma gönderildi.','success');
+    closeModal('modal-announce');
+    showToast('📢 Duyuru '+targets.length+' takıma gönderildi.','success');
   } catch(e) {
     console.error(e);
     for (const fid of uploaded) await dbRef(annFilePath(annId, fid)).remove().catch(()=>{});
-    showToast('Gönderilemedi: '+friendlyErr(e),'error');
+    if (isPermErr(e)) annErr('<b><i class="fas fa-lock mr-1"></i>Firebase duyuruya izin vermedi.</b><br>Büyük olasılıkla güncel güvenlik kuralları yüklenmemiş. Firebase Console → Realtime Database → <b>Rules</b> sekmesine yeni <code>database.rules.json</code> içeriğini yapıştırıp <b>Publish</b>\'e basın, sonra sayfayı yenileyip tekrar deneyin.');
+    else annErr('<i class="fas fa-circle-exclamation mr-1"></i>Gönderilemedi: '+escHtml(friendlyErr(e)));
+    showToast('Duyuru gönderilemedi.','error');
   } finally {
     setProgress('ann', null);
-    btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-1.5"></i>Gönder';
+    btn.disabled = false; renderAnnTargets();
   }
 }
 function annRecipients(a) {

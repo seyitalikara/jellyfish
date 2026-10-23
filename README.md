@@ -46,14 +46,16 @@ Telefonda: bağlantıyı açın, ardından tarayıcı menüsünden "Ana ekrana e
 
 ### Takımlara duyuru gönderme
 
-Sol menüden **Duyurular**'a tıklayın.
+Her ekranın sağ üstündeki turuncu **📢 Duyuru Yap** düğmesine basın (Genel Bakış'taki duyuru şeridinden ve sol menüdeki **Duyurular** sayfasından da açılır).
 
 1. Türü seçin:
    - **İkaz / Duyuru:** Öğrencinin ekranında açılır pencere (pop-up) olarak çıkar. Öğrenci **Okudum** diyene kadar her girişte yeniden gösterilir. Mesaj zorunludur.
    - **Dosya Paylaşımı:** Geçmiş yılların raporları, şablonlar, yönergeler gibi dosyalar için (en fazla 5 dosya, her biri en fazla 10 MB). İsterseniz bunu da pop-up olarak duyurabilirsiniz.
-2. **Kime:** Tüm takımlar ya da seçtiğiniz takımlar. Bir takıma gönderilen duyuruyu diğer takımlar görmez.
+2. **Kime:** Varsayılan olarak **Tüm takımlar** seçilidir. Yalnızca bazı takımlara göndermek için **Seçtiğim takımlar**'ı işaretleyip takımları seçin. Pencerenin altında duyurunun kaç takımdaki kaç öğrenciye gideceği yazar. Bir takıma gönderilen duyuruyu diğer takımlar görmez.
 3. Başlık, önem derecesi (Bilgi / Önemli / Acil) ve mesajı yazıp **Gönder**'e basın. Öğrencilere bildirim de gider.
 4. Gönderilen her duyurunun yanında **"X / Y okudu"** görünür. Tıklayınca kimin ne zaman okuduğu, kimin henüz okumadığı listelenir.
+
+> Gönderirken *"Firebase duyuruya izin vermedi"* uyarısı çıkarsa güncel `database.rules.json` Firebase'e yüklenmemiştir: Firebase Console → Realtime Database → **Rules** → yapıştır → **Publish**.
 
 > "Tüm takımlar" seçimi gönderme anındaki takımları kapsar. Sonradan açılan bir takım eski duyuruları görmez; gerekirse duyuruyu yeniden gönderin.
 
