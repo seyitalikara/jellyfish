@@ -1,6 +1,6 @@
 # 🪼 JellyFish — Takım Görev Yönetimi
 
-Kulüp takımları için gerçek zamanlı görev dağıtım ve rapor toplama uygulaması. Danışman takımları kurar, tüm görevleri izler ve öğrenci raporlarını değerlendirir. Takım üyeleri görev oluşturur, tamamlar, birbirine devreder (paslar) ve danışmana rapor gönderir.
+Kulüp takımları için gerçek zamanlı görev dağıtım ve rapor toplama uygulaması. Danışman takımları kurar, tüm görevleri izler ve öğrenci raporlarını değerlendirir. Takım üyeleri kendi takımlarında görev oluşturur, birden fazla kişiye atar, durumunu günceller, belge ekler, birbirine devreder (paslar) ve danışmana rapor gönderir. Her takım yalnızca kendi görevlerini görür.
 
 
 ## 👩‍🎓 Öğrenciler için: nasıl kullanırım?
@@ -13,6 +13,14 @@ Hiçbir şey indirmenize gerek yok.
 4. Adınızı, **kişisel şifrenizi** (en az 4 karakter), alanınızı ve takımınızı seçip **Takıma Katıl**'a basın.
 
 > **Kişisel şifre:** İlk girişte yazdığınız şifre hesabınıza kilitlenir. Başka bir cihazdan girerken adınızı **aynı şekilde** ve **aynı şifreyle** yazın. Şifrenizi unutursanız danışmanınız sıfırlayabilir.
+
+### ✅ Görevler
+
+- **Görev Ekle** ile yeni görev açın. **Atanan Kişiler** listesinden bir veya birden fazla kişiyi işaretleyin.
+- Göreve tıklayınca detay açılır. **Durumu değiştir** düğmeleriyle Yapılacak / Devam Ediyor / Beklemede / Tamamlandı arasında geçiş yapın. Bilgisayarda kartı sütunlar arasında sürükleyip bırakabilirsiniz.
+- **Belgeler → Belge yükle** ile göreve dosya ekleyin (PDF, Word, Excel, PowerPoint, resim, CAD, ZIP…, en fazla 10 MB). Takım arkadaşlarınız indirebilir.
+- Kendi oluşturduğunuz görevi detaydaki **Sil** ile silebilirsiniz.
+- **Bu görev bitince bildirim gönder** bölümünden başka bir takım seçerseniz, görev tamamlandığında o takıma haber gider.
 
 ### 📄 Rapor gönderme
 
@@ -60,8 +68,9 @@ GitHub Pages ile yayınlama:
 - `index.html` içindeki Firebase bilgileri **gizli şifre değildir**. Google bunların web sayfasında görünmesini normal kabul eder.
 - Veriyi `database.rules.json` içindeki kurallar korur:
   - Yalnızca uygulamadan giriş yapanlar veriye erişebilir (Firebase Anonim Giriş).
-  - **Takım oluşturma, görev silme ve üye ekleme** yalnızca danışmana açıktır.
-  - Öğrenciler görev ekleyebilir, güncelleyebilir, tamamlayabilir ve paslayabilir, ama **silemez**.
+  - **Takım oluşturma ve üye ekleme** yalnızca danışmana açıktır.
+  - Öğrenciler **yalnızca kendi takımlarının** görevlerini ve belgelerini görebilir, ekleyebilir ve güncelleyebilir. Başka takıma görev atanamaz.
+  - Öğrenci yalnızca **kendi oluşturduğu görevi** ve **kendi yüklediği belgeyi** silebilir. Danışman hepsini silebilir.
   - **Raporlar ve dosyaları** yalnızca raporu gönderen öğrenci ve danışman tarafından okunabilir. Geri bildirimi yalnızca danışman yazabilir.
   - Danışman ve öğrenci şifreleri veritabanında açık metin olarak tutulmaz. Yalnızca SHA-256 özeti saklanır ve bu özeti kimse okuyamaz.
 - Kulüp kodunu yalnızca kendi öğrencilerinizle paylaşın.

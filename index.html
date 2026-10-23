@@ -35,6 +35,8 @@
     input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset:0}
     .team-bar{width:4px;border-radius:2px;flex-shrink:0}
     .modal-overlay{background:rgba(0,0,0,0.5);backdrop-filter:blur(2px)}
+    .drop-hover{background:rgba(59,130,246,.06);outline:2px dashed #93c5fd;outline-offset:4px;border-radius:12px}
+    .task-card[draggable=true]{cursor:grab}
     .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   </style>
 </head>
@@ -227,19 +229,19 @@
         <div class="grid grid-cols-4 gap-4">
           <div>
             <div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span><span class="text-sm font-semibold text-slate-600">Yapılacak</span><span id="count-todo" class="ml-auto bg-slate-200 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full"></span></div>
-            <div id="col-todo" class="kanban-col space-y-2.5"></div>
+            <div id="col-todo" class="kanban-col space-y-2.5" ondragover="onColDragOver(event)" ondragleave="onColDragLeave(event)" ondrop="onColDrop(event,'todo')"></div>
           </div>
           <div>
             <div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span><span class="text-sm font-semibold text-slate-600">Devam Ediyor</span><span id="count-inprogress" class="ml-auto bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full"></span></div>
-            <div id="col-inprogress" class="kanban-col space-y-2.5"></div>
+            <div id="col-inprogress" class="kanban-col space-y-2.5" ondragover="onColDragOver(event)" ondragleave="onColDragLeave(event)" ondrop="onColDrop(event,'inprogress')"></div>
           </div>
           <div>
-            <div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-red-400"></span><span class="text-sm font-semibold text-slate-600">Bekliyor</span><span id="count-blocked" class="ml-auto bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full"></span></div>
-            <div id="col-blocked" class="kanban-col space-y-2.5"></div>
+            <div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-red-400"></span><span class="text-sm font-semibold text-slate-600">Beklemede</span><span id="count-blocked" class="ml-auto bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full"></span></div>
+            <div id="col-blocked" class="kanban-col space-y-2.5" ondragover="onColDragOver(event)" ondragleave="onColDragLeave(event)" ondrop="onColDrop(event,'blocked')"></div>
           </div>
           <div>
             <div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-green-500"></span><span class="text-sm font-semibold text-slate-600">Tamamlandı</span><span id="count-done" class="ml-auto bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full"></span></div>
-            <div id="col-done" class="kanban-col space-y-2.5"></div>
+            <div id="col-done" class="kanban-col space-y-2.5" ondragover="onColDragOver(event)" ondragleave="onColDragLeave(event)" ondrop="onColDrop(event,'done')"></div>
           </div>
         </div>
       </div>
@@ -369,10 +371,10 @@
         <input id="task-title" placeholder="Devre şeması çizimi" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm"></div>
       <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Açıklama</label>
         <textarea id="task-desc" rows="2" placeholder="Görevin detayları..." class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm resize-none"></textarea></div>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Atanan Kişi</label>
-          <select id="task-assignee" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
-            <option value="">Atanmadı</option></select></div>
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Atanan Kişiler</label>
+        <div id="task-assignees" class="border border-slate-200 rounded-xl p-1.5 max-h-40 overflow-y-auto"></div>
+        <p class="text-xs text-slate-400 mt-1">Birden fazla kişi seçebilirsiniz.</p></div>
+      <div class="grid grid-cols-3 gap-3">
         <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Öncelik</label>
           <select id="task-priority" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
             <option value="low">🟢 Düşük</option>
@@ -380,32 +382,26 @@
             <option value="high">🟠 Yüksek</option>
             <option value="critical">🔴 Kritik</option>
           </select></div>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
         <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Son Tarih</label>
           <input type="date" id="task-deadline" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></div>
         <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Durum</label>
           <select id="task-status" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
             <option value="todo">⬜ Yapılacak</option>
             <option value="inprogress">🔵 Devam Ediyor</option>
-            <option value="blocked">🔴 Bekliyor</option>
+            <option value="blocked">🟠 Beklemede</option>
             <option value="done">✅ Tamamlandı</option>
           </select></div>
       </div>
       <div>
         <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Bu görev bitince bildirim gönder →</label>
-        <p class="text-xs text-slate-400 mb-2">Başka bir takımın görevi/üyesi bu göreve bağımlıysa, biten görev onları uyarır.</p>
+        <p class="text-xs text-slate-400 mb-2">Görev tamamlandığında seçtiğiniz takımlara bildirim gider. Örnek: Mekanik çizimi bitince → Elektronik takımı uyarılır.</p>
         <div id="dep-list" class="space-y-2 mb-2"></div>
         <div class="flex gap-2">
           <select id="dep-team-select" class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-xs bg-white">
             <option value="">Takım seçin...</option>
           </select>
-          <select id="dep-task-select" class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-xs bg-white">
-            <option value="">Görev seçin...</option>
-          </select>
-          <button onclick="addDependency()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-lg text-xs transition"><i class="fas fa-plus"></i></button>
+          <button onclick="addNotifyTeam()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-lg text-xs transition"><i class="fas fa-plus"></i></button>
         </div>
-        <p class="text-xs text-slate-400 mt-1">Örnek: Mekanik çizimi → Elektronik takımına bildirim gider.</p>
       </div>
       <input type="hidden" id="task-id-edit">
     </div>
@@ -423,12 +419,29 @@
       <h3 id="detail-title" class="font-bold text-slate-800 text-lg flex-1 pr-4"></h3>
       <button onclick="closeModal('modal-detail')" class="text-slate-400 hover:text-slate-600 flex-shrink-0"><i class="fas fa-times"></i></button>
     </div>
-    <div class="p-5 space-y-3 overflow-y-auto max-h-96">
+    <div class="p-5 space-y-4 overflow-y-auto" style="max-height:65vh">
       <div id="detail-badges" class="flex flex-wrap gap-2"></div>
       <p id="detail-desc" class="text-sm text-slate-600 leading-relaxed"></p>
       <div id="detail-meta" class="space-y-2 text-sm"></div>
+      <div id="detail-status-wrap" class="hidden">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Durumu değiştir</p>
+        <div id="detail-status" class="grid grid-cols-2 sm:grid-cols-4 gap-1.5"></div>
+      </div>
+      <div id="detail-files-wrap" class="hidden">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide"><i class="fas fa-paperclip mr-1"></i>Belgeler</p>
+          <label for="task-file-input" id="task-file-btn" class="text-xs font-semibold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg cursor-pointer transition"><i class="fas fa-upload mr-1"></i>Belge yükle</label>
+          <input type="file" id="task-file-input" class="hidden">
+        </div>
+        <div id="detail-files-list" class="space-y-1.5"></div>
+        <div id="taskfile-progress" class="hidden mt-2">
+          <div class="flex justify-between text-xs text-slate-500 mb-1"><span>Yükleniyor...</span><span id="taskfile-progress-pct">%0</span></div>
+          <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div id="taskfile-progress-bar" class="h-full bg-blue-500 transition-all" style="width:0%"></div></div>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-1.5">PDF, Word, Excel, PowerPoint, resim, CAD (DWG, STEP, STL, SolidWorks), ZIP… en fazla 10 MB.</p>
+      </div>
       <div id="detail-deps" class="hidden">
-        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Bağımlılıklar (bitince bildirim gider):</p>
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Bitince bildirim gidecek takımlar:</p>
         <div id="detail-deps-list" class="space-y-1"></div>
       </div>
       <div id="detail-history" class="hidden">
@@ -451,7 +464,9 @@
     </div>
     <div class="p-5 space-y-4">
       <p class="text-sm text-slate-500">Görevi devrettiğinde, yeni atanan kişiye bildirim gönderilir.</p>
-      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Devredilecek Kişi</label>
+      <div id="pass-from-wrap"><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Devreden Kişi</label>
+        <select id="pass-from" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white"></select></div>
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Devralacak Kişi</label>
         <select id="pass-to" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white">
           <option value="">Kişi seçin...</option>
         </select></div>
@@ -567,6 +582,8 @@ const state = {
   notifications: {},
   selectedColor: '#3b82f6',
   editingTaskDeps: [],
+  editingNotifyTeams: [],
+  teamList: {},         // {teamId:{id,name,color}} — giriş ve takımlar arası bildirim için
   editingTaskId: null,
   currentDetailTaskId: null,
   currentDetailTeamId: null,
@@ -684,23 +701,40 @@ async function adminLogin(code, pass) {
 // raporlara erişim bu bağ üzerinden güvenlik kurallarıyla denetlenir.
 function memberHash(code, memberId, pin) { return sha256Hex('jellyfish-member:'+code+':'+memberId+':'+pin); }
 async function memberLogin(code, teamId, name, role, pin) {
-  const teams = await getClubTeams(code);
-  let member = null;
-  if (teams[teamId] && teams[teamId].members) {
-    member = Object.values(teams[teamId].members).find(m => (m.name||'').toLocaleLowerCase('tr')===name.toLocaleLowerCase('tr')) || null;
-  }
+  const members = (await dbGet('clubs/'+code+'/teams/'+teamId+'/members')) || {};
+  const member = Object.values(members).find(m => (m.name||'').toLocaleLowerCase('tr')===name.toLocaleLowerCase('tr')) || null;
   const memberId = member ? member.id : await addMember(teamId, {name, role, uid:state.uid}, code);
   const hash = await memberHash(code, memberId, pin);
   try { await dbSet('memberSecrets/'+code+'/'+memberId+'/hash', hash); }
   catch(e) { if (!isPermErr(e)) throw e; } // şifre daha önce belirlenmiş → normal
   try { await dbSet('clubs/'+code+'/memberUids/'+memberId+'/'+state.uid, hash); }
   catch(e) { if (isPermErr(e)) return {ok:false}; throw e; }
+  await bindUidToMember(code, memberId);
   return {ok:true, memberId, name: member ? member.name : name, role: member ? (member.role||role) : role};
+}
+
+// Bu tarayıcı kimliğinin hangi öğrenciye ait olduğunu kaydeder. Güvenlik kuralları
+// bu bilgiyle öğrencinin yalnızca KENDİ takımını görmesine ve düzenlemesine izin verir.
+async function bindUidToMember(code, memberId) {
+  try { await dbSet('clubs/'+code+'/uidMember/'+state.uid, memberId); }
+  catch(e) { console.warn('uidMember yazılamadı (kurallar güncel değil mi?)', e); }
 }
 
 // TEAMS
 async function createTeam(data) {
-  return dbPush('clubs/'+state.clubCode+'/teams', {...data, createdAt:Date.now()});
+  const id = await dbPush('clubs/'+state.clubCode+'/teams', {...data, createdAt:Date.now()});
+  await dbSet('clubs/'+state.clubCode+'/teamList/'+id, {id, name:data.name, color:data.color||'#3b82f6'}).catch(()=>{});
+  return id;
+}
+// Danışman: herkese açık takım listesini (yalnızca ad ve renk) güncel tutar
+function syncTeamList() {
+  if (!state.isAdmin) return;
+  const list = {};
+  Object.values(state.teams).forEach(t => { if (t && t.id) list[t.id] = {id:t.id, name:t.name||'', color:t.color||'#3b82f6'}; });
+  const str = JSON.stringify(list);
+  if (str === state._teamListSynced) return;
+  state._teamListSynced = str;
+  dbSet('clubs/'+state.clubCode+'/teamList', Object.keys(list).length?list:null).catch(e=>console.warn('teamList', e));
 }
 
 // MEMBERS
@@ -717,47 +751,66 @@ function getMemberName(teamId, memberId) {
 }
 
 // TASKS
+const STATUS_L = {todo:'Yapılacak', inprogress:'Devam Ediyor', blocked:'Beklemede', done:'Tamamlandı'};
+function asList(v) { return v ? (Array.isArray(v)?v:Object.values(v)).filter(x=>x!=null) : []; }
+// Eski görevlerde tek "assigneeId", yenilerde "assigneeIds" listesi var
+function taskAssignees(t) { if (!t) return []; const l = asList(t.assigneeIds); return l.length ? l : (t.assigneeId ? [t.assigneeId] : []); }
+function getTask(teamId, taskId) { return state.teams[teamId] && state.teams[teamId].tasks && state.teams[teamId].tasks[taskId]; }
+function canEditTeam(teamId) { return state.isAdmin || (state.currentUser && state.currentUser.teamId===teamId); }
+function canDeleteTask(t) { return state.isAdmin || (!!t && !!t.createdBy && t.createdBy===state.currentUser?.id); }
+function assigneeNames(teamId, t) { return taskAssignees(t).map(id=>getMemberName(teamId,id)); }
+
 async function createTask(teamId, task) {
-  const id = await dbPush('clubs/'+state.clubCode+'/teams/'+teamId+'/tasks', {...task, status:task.status||'todo', createdAt:Date.now(), updatedAt:Date.now()});
-  if (task.assigneeId) {
-    await createNotification({targetMemberId:task.assigneeId, targetTeamId:teamId, message:'"'+task.title+'" görevi sana atandı!', type:'task_assigned', relatedTaskId:id, relatedTeamId:teamId});
+  const now = Date.now();
+  const data = {...task, status:task.status||'todo', createdAt:now, updatedAt:now};
+  if (data.status==='done') data.completedAt = now;
+  const id = await dbPush('clubs/'+state.clubCode+'/teams/'+teamId+'/tasks', data);
+  for (const mid of taskAssignees(task)) {
+    if (mid===state.currentUser?.id) continue;
+    await createNotification({targetMemberId:mid, targetTeamId:teamId, message:'"'+task.title+'" görevi sana atandı!', type:'task_assigned', relatedTaskId:id, relatedTeamId:teamId});
   }
   return id;
 }
 async function updateTask(teamId, taskId, updates) {
   await dbUpdate('clubs/'+state.clubCode+'/teams/'+teamId+'/tasks/'+taskId, {...updates, updatedAt:Date.now()});
 }
-async function completeTask(teamId, taskId) {
-  const task = state.teams[teamId]&&state.teams[teamId].tasks&&state.teams[teamId].tasks[taskId];
+async function setTaskStatus(teamId, taskId, status) {
+  const task = getTask(teamId, taskId); if (!task || task.status===status) return;
+  if (status==='done') { await completeTask(teamId, taskId); showToast('Görev tamamlandı! 🎉','success'); return; }
+  await updateTask(teamId, taskId, {status, completedAt:null});
+  showToast('"'+task.title+'" → '+STATUS_L[status],'info');
+}
+async function completeTask(teamId, taskId, taskData) {
+  const task = taskData || getTask(teamId, taskId);
   if (!task) return;
   await updateTask(teamId, taskId, {status:'done', completedAt:Date.now()});
-  // Fire dependency notifications
+  const myTeam = state.teams[teamId] || state.teamList[teamId];
+  // Yeni: görev bitince seçilen takımlara bildirim
+  for (const nt of asList(task.notifyTeams)) {
+    if (!nt || !nt.teamId || nt.teamId===teamId) continue;
+    await createNotification({targetMemberId:'__team__'+nt.teamId, targetTeamId:nt.teamId, message:'✅ '+(myTeam?myTeam.name:'Bir takım')+': "'+task.title+'" tamamlandı. Sizin tarafınızda devam edebilirsiniz.', type:'dependency_resolved', relatedTeamId:nt.teamId});
+    showToast('"'+(nt.teamName||'Takım')+'" takımına bildirim gönderildi.','success');
+  }
+  // Eski sürüm bağımlılıkları (görünen takımlar içinde)
   for (const [tId, team] of Object.entries(state.teams)) {
     if (!team.tasks) continue;
     for (const [tskId, tsk] of Object.entries(team.tasks)) {
       if (!tsk.dependsOn) continue;
-      const deps = Array.isArray(tsk.dependsOn) ? tsk.dependsOn : Object.values(tsk.dependsOn);
-      if (deps.some(d => d.taskId === taskId && d.teamId === teamId)) {
-        await createNotification({
-          targetMemberId: tsk.assigneeId || ('__team__'+tId),
-          targetTeamId: tId,
-          message: '✅ "'+task.title+'" tamamlandı → "'+tsk.title+'" için devam edebilirsiniz!',
-          type: 'dependency_resolved',
-          relatedTaskId: tskId,
-          relatedTeamId: tId
-        });
-        showToast('"'+task.title+'" bitti → "'+tsk.title+'" için bildirim gönderildi!','success');
+      if (asList(tsk.dependsOn).some(d => d.taskId === taskId && d.teamId === teamId)) {
+        const targets = taskAssignees(tsk); if (!targets.length) targets.push('__team__'+tId);
+        for (const tg of targets) await createNotification({targetMemberId:tg, targetTeamId:tId, message:'✅ "'+task.title+'" tamamlandı → "'+tsk.title+'" için devam edebilirsiniz!', type:'dependency_resolved', relatedTaskId:tskId, relatedTeamId:tId});
       }
     }
   }
 }
-async function passTask(teamId, taskId, toMemberId, note) {
-  const task = state.teams[teamId]&&state.teams[teamId].tasks&&state.teams[teamId].tasks[taskId];
+async function passTask(teamId, taskId, fromId, toMemberId, note) {
+  const task = getTask(teamId, taskId);
   if (!task) return;
-  const entry = {from:task.assigneeId||null, fromName:task.assigneeId?getMemberName(teamId,task.assigneeId):'Atanmamış', to:toMemberId, toName:getMemberName(teamId,toMemberId), note:note||'', at:Date.now()};
-  let history = task.passHistory ? (Array.isArray(task.passHistory)?task.passHistory:Object.values(task.passHistory)) : [];
-  history.push(entry);
-  await updateTask(teamId, taskId, {assigneeId:toMemberId, passHistory:history});
+  const entry = {from:fromId||null, fromName:fromId?getMemberName(teamId,fromId):'Atanmamış', to:toMemberId, toName:getMemberName(teamId,toMemberId), note:note||'', at:Date.now()};
+  const history = asList(task.passHistory); history.push(entry);
+  const next = taskAssignees(task).filter(x=>x!==fromId);
+  if (!next.includes(toMemberId)) next.push(toMemberId);
+  await updateTask(teamId, taskId, {assigneeIds:next, assigneeId:null, passHistory:history});
   await createNotification({targetMemberId:toMemberId, targetTeamId:teamId, message:'"'+task.title+'" görevi sana devredildi.'+(note?' Not: "'+note+'"':''), type:'task_passed', relatedTaskId:taskId, relatedTeamId:teamId});
 }
 
@@ -783,9 +836,19 @@ function getMyNotifs() {
 // LISTENERS
 async function startListeners() {
   try { await state.authReady; } catch(e) { return; }
-  const tRef = state.db.ref('clubs/'+state.clubCode+'/teams');
-  tRef.on('value', snap => { state.teams = snap.exists()?snap.val():{}; renderCurrentView(); renderSidebarTeams(); renderFilterAssignee(); }, e => { console.error(e); showToast('Veri okunamadı: '+friendlyErr(e),'error'); });
+  // Danışman tüm takımları, öğrenci yalnızca kendi takımını dinler (kurallar da bunu zorunlu kılar)
+  const myTeamId = state.isAdmin ? null : state.currentTeamId;
+  const tRef = state.db.ref('clubs/'+state.clubCode+'/teams'+(myTeamId?'/'+myTeamId:''));
+  tRef.on('value', snap => {
+    const v = snap.exists()?snap.val():null;
+    state.teams = state.isAdmin ? (v||{}) : (v ? {[myTeamId]: v} : {});
+    syncTeamList();
+    renderCurrentView(); renderSidebarTeams(); renderFilterAssignee(); refreshDetailModal();
+  }, e => { console.error(e); showToast('Veri okunamadı: '+friendlyErr(e),'error'); });
   state.firebaseListeners.push(() => tRef.off());
+  const lRef = state.db.ref('clubs/'+state.clubCode+'/teamList');
+  lRef.on('value', snap => { state.teamList = snap.exists()?snap.val():{}; }, e => console.warn('teamList', e));
+  state.firebaseListeners.push(() => lRef.off());
   const nRef = state.db.ref('clubs/'+state.clubCode+'/notifications');
   nRef.on('value', snap => { state.notifications = snap.exists()?snap.val():{}; renderNotifBadge(); if (!document.getElementById('panel-notif').classList.contains('hidden')) renderNotifPanel(); });
   state.firebaseListeners.push(() => nRef.off());
@@ -822,11 +885,12 @@ async function loadTeamsForLogin(code) {
   const sel = document.getElementById('login-team-select');
   const prev = sel.value;
   let teams = {};
-  try { teams = await getClubTeams(code); } catch(e) { console.error(e); }
+  try { teams = (await dbGet('clubs/'+code+'/teamList')) || {}; } catch(e) { console.warn(e); }
+  if (!Object.keys(teams).length) { try { teams = await getClubTeams(code); } catch(e) { console.warn(e); } } // eski kurallarla uyumluluk
   sel.innerHTML = '<option value="">-- Takım seçin --</option>';
   if (Object.keys(teams).length) {
     Object.values(teams).forEach(t => { const o=document.createElement('option'); o.value=t.id; o.textContent=t.name; sel.appendChild(o); });
-  } else { sel.innerHTML = '<option value="">Takım bulunamadı — danışmana sorun</option>'; }
+  } else { sel.innerHTML = '<option value="">Takım bulunamadı — danışman bir kez giriş yapmalı</option>'; }
   if (prev && teams[prev]) sel.value = prev;
 }
 
@@ -875,9 +939,12 @@ function showLoginError(msg) {
 
 function handleLogout() {
   stopListeners(); localStorage.removeItem('jf_session');
-  Object.assign(state,{clubCode:null,isAdmin:false,currentUser:null,currentTeamId:null,teams:{},notifications:{},reports:{},feedback:{},revisionOf:null,pendingReportFile:null});
+  Object.assign(state,{clubCode:null,isAdmin:false,currentUser:null,currentTeamId:null,teams:{},teamList:{},_teamListSynced:null,notifications:{},reports:{},feedback:{},revisionOf:null,pendingReportFile:null});
   document.getElementById('login-member-pin').value='';
   document.getElementById('login-admin-pass').value='';
+  const btn=document.getElementById('btn-login'); btn.disabled=false;
+  btn.innerHTML='<i class="fas fa-arrow-right-to-bracket mr-2"></i><span id="btn-login-text">'+(loginTab==='admin'?'Danışman Olarak Gir':'Takıma Katıl')+'</span>';
+  closeModal('modal-detail'); closeModal('modal-task'); closeNotifPanel();
   showScreen('screen-login');
 }
 
@@ -929,6 +996,7 @@ function showAdminDashboard() {
 }
 
 function showTeamView(teamId) {
+  if (!state.isAdmin && state.currentUser && teamId !== state.currentUser.teamId) return;
   state.currentTeamId = teamId;
   const team = state.teams[teamId];
   document.getElementById('view-admin').classList.add('hidden');
@@ -968,7 +1036,7 @@ function renderAdminDashboard() {
       +'<div class="h-1.5" style="background:'+( team.color||'#3b82f6')+'"></div>'
       +'<div class="p-5">'
       +'<div class="flex items-start justify-between mb-3"><div><h3 class="font-bold text-slate-800">'+escHtml(team.name)+'</h3><p class="text-xs text-slate-400 mt-0.5">'+escHtml(team.description||'')+'</p></div>'
-      +(blocked>0?'<span class="blink text-xs bg-red-100 text-red-600 font-semibold px-2 py-1 rounded-full">⚠️ '+blocked+' bekliyor</span>':'')
+      +(blocked>0?'<span class="blink text-xs bg-red-100 text-red-600 font-semibold px-2 py-1 rounded-full">⏸ '+blocked+' beklemede</span>':'')
       +'</div>'
       +'<div class="grid grid-cols-4 gap-2 mb-4 text-center">'
       +'<div><div class="text-lg font-bold text-slate-500">'+todo+'</div><div class="text-xs text-slate-400">Yapılacak</div></div>'
@@ -990,9 +1058,11 @@ function renderAdminDashboard() {
 // TEAM KANBAN
 function renderTeamKanban(teamId) {
   const team = state.teams[teamId]; if(!team) return;
+  document.getElementById('topbar-title').textContent = team.name;
+  document.getElementById('topbar-sub').textContent = team.description||'';
   const filterAssignee = document.getElementById('filter-assignee').value;
   let tasks = team.tasks ? Object.values(team.tasks) : [];
-  if (filterAssignee) tasks = tasks.filter(t=>t.assigneeId===filterAssignee);
+  if (filterAssignee) tasks = tasks.filter(t=>taskAssignees(t).includes(filterAssignee));
   const by = {todo:[],inprogress:[],blocked:[],done:[]};
   tasks.forEach(t => { if(by[t.status]) by[t.status].push(t); else by.todo.push(t); });
   const pO = {critical:0,high:1,medium:2,low:3};
@@ -1016,14 +1086,16 @@ function renderTeamKanban(teamId) {
 
 function renderTaskCard(task, teamId) {
   const team = state.teams[teamId];
-  const aName = task.assigneeId ? getMemberName(teamId,task.assigneeId) : null;
+  const names = assigneeNames(teamId, task);
   const today = new Date().toISOString().split('T')[0];
   const isOverdue = task.deadline && task.deadline<today && task.status!=='done';
   const tc = team&&team.color ? team.color : '#3b82f6';
   const pC = {low:'bg-slate-100 text-slate-500',medium:'bg-yellow-100 text-yellow-700',high:'bg-orange-100 text-orange-700',critical:'bg-red-100 text-red-700'};
   const pL = {low:'Düşük',medium:'Orta',high:'Yüksek',critical:'Kritik'};
-  const hasDeps = task.dependsOn && Object.values(task.dependsOn).length>0;
-  return '<div class="task-card bg-white rounded-xl shadow-sm border border-slate-100 p-3.5 hover:shadow-md hover:border-blue-200 transition fade-in" onclick="openDetailModal(\''+teamId+'\',\''+task.id+'\')">'
+  const hasDeps = asList(task.notifyTeams).length>0 || asList(task.dependsOn).length>0;
+  const nFiles = asList(task.attachments).length;
+  const drag = canEditTeam(teamId) ? ' draggable="true" ondragstart="onCardDragStart(event,\''+teamId+'\',\''+task.id+'\')" ondragend="onCardDragEnd()"' : '';
+  return '<div class="task-card bg-white rounded-xl shadow-sm border border-slate-100 p-3.5 hover:shadow-md hover:border-blue-200 transition fade-in"'+drag+' onclick="openDetailModal(\''+teamId+'\',\''+task.id+'\')">'
     +'<div class="flex items-start justify-between gap-2 mb-2">'
     +'<p class="text-sm font-semibold text-slate-800 leading-snug flex-1">'+escHtml(task.title)+'</p>'
     +'<div class="w-1 min-h-[20px] rounded team-bar flex-shrink-0" style="background:'+tc+'"></div>'
@@ -1032,11 +1104,26 @@ function renderTaskCard(task, teamId) {
     +'<div class="flex items-center justify-between mt-2 flex-wrap gap-1">'
     +'<span class="text-xs font-medium px-2 py-0.5 rounded-full '+(pC[task.priority]||'bg-slate-100 text-slate-500')+'">'+( pL[task.priority]||task.priority)+'</span>'
     +'<div class="flex items-center gap-2">'
-    +(hasDeps?'<span title="Bağımlılık var" class="text-xs text-purple-400"><i class="fas fa-link"></i></span>':'')
+    +(nFiles?'<span title="'+nFiles+' belge" class="text-xs text-slate-400"><i class="fas fa-paperclip mr-0.5"></i>'+nFiles+'</span>':'')
+    +(hasDeps?'<span title="Bitince başka takıma bildirim gider" class="text-xs text-purple-400"><i class="fas fa-link"></i></span>':'')
     +(isOverdue?'<span class="text-xs text-red-500 font-semibold blink"><i class="fas fa-clock mr-0.5"></i>Gecikti</span>':(task.deadline?'<span class="text-xs text-slate-400">'+formatDate(task.deadline)+'</span>':''))
     +'</div></div>'
-    +(aName?'<div class="mt-2.5 flex items-center gap-1.5"><div class="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background:'+tc+'">'+aName[0].toUpperCase()+'</div><span class="text-xs text-slate-500 truncate">'+escHtml(aName)+'</span></div>':'')
+    +(names.length?'<div class="mt-2.5 flex items-center gap-1.5"><div class="flex -space-x-1.5 flex-shrink-0">'
+      +names.slice(0,4).map(n=>'<div class="w-5 h-5 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px] font-bold" style="background:'+tc+'" title="'+escHtml(n)+'">'+escHtml((n||'?')[0].toUpperCase())+'</div>').join('')
+      +'</div><span class="text-xs text-slate-500 truncate">'+escHtml(names.length>2?names.slice(0,2).join(', ')+' +'+(names.length-2):names.join(', '))+'</span></div>':'')
     +'</div>';
+}
+
+// SÜRÜKLE-BIRAK: kartı başka sütuna bırakınca durum değişir
+let dragTask = null;
+function onCardDragStart(e, teamId, taskId) { dragTask = {teamId, taskId}; e.dataTransfer.effectAllowed='move'; try { e.dataTransfer.setData('text/plain', taskId); } catch(_){} }
+function onCardDragEnd() { dragTask = null; document.querySelectorAll('.drop-hover').forEach(el=>el.classList.remove('drop-hover')); }
+function onColDragOver(e) { if (!dragTask) return; e.preventDefault(); e.currentTarget.classList.add('drop-hover'); }
+function onColDragLeave(e) { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.classList.remove('drop-hover'); }
+async function onColDrop(e, status) {
+  e.preventDefault(); e.currentTarget.classList.remove('drop-hover');
+  const d = dragTask; dragTask = null; if (!d) return;
+  try { await setTaskStatus(d.teamId, d.taskId, status); } catch(err) { showToast('Durum değiştirilemedi: '+friendlyErr(err),'error'); }
 }
 
 // SIDEBAR TEAMS
@@ -1095,18 +1182,19 @@ async function submitAddMember() {
 // MODAL: CREATE/EDIT TASK
 function openCreateTaskModal() {
   if (!state.currentTeamId) { showToast('Önce bir takım seçin.','error'); return; }
+  if (!canEditTeam(state.currentTeamId)) { showToast('Yalnızca kendi takımınıza görev ekleyebilirsiniz.','error'); return; }
   document.getElementById('modal-task-title').textContent='Yeni Görev';
   ['task-title','task-desc','task-deadline'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('task-priority').value='medium';
   document.getElementById('task-status').value='todo';
   document.getElementById('task-id-edit').value='';
-  state.editingTaskDeps=[]; state.editingTaskId=null;
-  populateTaskAssigneeSelect(state.currentTeamId,null);
+  state.editingNotifyTeams=[]; state.editingTaskId=null;
+  populateTaskAssignees(state.currentTeamId, state.isAdmin ? [] : [state.currentUser.id]);
   populateDepTeamSelect(); renderDepList(); openModal('modal-task');
 }
 function openEditTaskModal(teamId, taskId) {
-  const task = state.teams[teamId]&&state.teams[teamId].tasks&&state.teams[teamId].tasks[taskId];
-  if (!task) return;
+  const task = getTask(teamId, taskId);
+  if (!task || !canEditTeam(teamId)) return;
   document.getElementById('modal-task-title').textContent='Görevi Düzenle';
   document.getElementById('task-title').value=task.title||'';
   document.getElementById('task-desc').value=task.description||'';
@@ -1115,126 +1203,269 @@ function openEditTaskModal(teamId, taskId) {
   document.getElementById('task-status').value=task.status||'todo';
   document.getElementById('task-id-edit').value=taskId;
   state.editingTaskId=taskId;
-  state.editingTaskDeps=task.dependsOn?(Array.isArray(task.dependsOn)?task.dependsOn:Object.values(task.dependsOn)):[];
-  populateTaskAssigneeSelect(teamId,task.assigneeId);
+  state.editingNotifyTeams=asList(task.notifyTeams).map(x=>({teamId:x.teamId, teamName:x.teamName}));
+  populateTaskAssignees(teamId, taskAssignees(task));
   populateDepTeamSelect(); renderDepList(); closeModal('modal-detail'); openModal('modal-task');
 }
-function populateTaskAssigneeSelect(teamId, curId) {
-  const sel = document.getElementById('task-assignee');
-  sel.innerHTML='<option value="">Atanmadı</option>';
-  getTeamMembers(teamId).forEach(m=>{const o=document.createElement('option');o.value=m.id;o.textContent=m.name+' ('+m.role+')';if(m.id===curId)o.selected=true;sel.appendChild(o);});
+function populateTaskAssignees(teamId, curIds) {
+  const el = document.getElementById('task-assignees');
+  const members = getTeamMembers(teamId);
+  el.innerHTML = members.length ? members.map(m=>'<label class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-sm">'
+      +'<input type="checkbox" class="task-assignee-cb w-4 h-4 accent-blue-600" value="'+m.id+'"'+((curIds||[]).includes(m.id)?' checked':'')+'>'
+      +'<span class="font-medium text-slate-700">'+escHtml(m.name)+'</span><span class="text-xs text-slate-400">'+escHtml(m.role||'')+'</span></label>').join('')
+    : '<p class="text-xs text-slate-400 px-2 py-1.5">Takımda henüz üye yok.</p>';
+}
+function getCheckedAssignees() { return Array.from(document.querySelectorAll('.task-assignee-cb:checked')).map(c=>c.value); }
+function allTeamsForSelect() {
+  const src = state.isAdmin ? state.teams : state.teamList;
+  return Object.values(src||{}).filter(t=>t&&t.id);
 }
 function populateDepTeamSelect() {
   const sel = document.getElementById('dep-team-select');
   sel.innerHTML='<option value="">Takım seçin...</option>';
-  Object.values(state.teams).forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o);});
+  allTeamsForSelect().filter(t=>t.id!==state.currentTeamId).forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o);});
 }
-document.getElementById('dep-team-select').addEventListener('change', function() {
-  const sel=document.getElementById('dep-task-select');
-  sel.innerHTML='<option value="">Görev seçin...</option>';
-  if (this.value && state.teams[this.value]&&state.teams[this.value].tasks) {
-    Object.values(state.teams[this.value].tasks).forEach(t=>{if(t.status!=='done'){const o=document.createElement('option');o.value=t.id;o.textContent=t.title;sel.appendChild(o);}});
-  }
-});
-function addDependency() {
+function addNotifyTeam() {
   const teamId=document.getElementById('dep-team-select').value;
-  const taskId=document.getElementById('dep-task-select').value;
-  if (!teamId||!taskId) { showToast('Takım ve görev seçin.','error'); return; }
-  if (state.editingTaskDeps.some(d=>d.taskId===taskId&&d.teamId===teamId)) { showToast('Bu bağımlılık zaten ekli.','warning'); return; }
-  state.editingTaskDeps.push({teamId, taskId, teamName:state.teams[teamId]?.name||teamId, taskTitle:state.teams[teamId]?.tasks?.[taskId]?.title||taskId});
+  if (!teamId) { showToast('Takım seçin.','error'); return; }
+  if (state.editingNotifyTeams.some(d=>d.teamId===teamId)) { showToast('Bu takım zaten ekli.','warning'); return; }
+  const t = allTeamsForSelect().find(x=>x.id===teamId);
+  state.editingNotifyTeams.push({teamId, teamName:t?t.name:teamId});
   renderDepList();
 }
-function removeDep(i) { state.editingTaskDeps.splice(i,1); renderDepList(); }
+function removeDep(i) { state.editingNotifyTeams.splice(i,1); renderDepList(); }
 function renderDepList() {
   const el=document.getElementById('dep-list');
-  el.innerHTML=state.editingTaskDeps.map((d,i)=>'<div class="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-lg px-3 py-2"><span class="text-xs text-purple-700"><i class="fas fa-link mr-1"></i>'+escHtml(d.teamName)+' → <strong>'+escHtml(d.taskTitle)+'</strong> bitince bildirim</span><button onclick="removeDep('+i+')" class="text-purple-400 hover:text-red-500 ml-2"><i class="fas fa-times"></i></button></div>').join('');
+  el.innerHTML=state.editingNotifyTeams.map((d,i)=>'<div class="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-lg px-3 py-2"><span class="text-xs text-purple-700"><i class="fas fa-bell mr-1"></i>Bitince <strong>'+escHtml(d.teamName)+'</strong> takımına bildirim</span><button onclick="removeDep('+i+')" class="text-purple-400 hover:text-red-500 ml-2"><i class="fas fa-times"></i></button></div>').join('');
 }
 async function submitTask() {
   const title = document.getElementById('task-title').value.trim();
   if (!title) { showToast('Görev başlığı boş olamaz.','error'); return; }
-  const task = {title, description:document.getElementById('task-desc').value.trim(), assigneeId:document.getElementById('task-assignee').value||null, priority:document.getElementById('task-priority').value, status:document.getElementById('task-status').value, deadline:document.getElementById('task-deadline').value||null, dependsOn:state.editingTaskDeps.length>0?state.editingTaskDeps:null, createdBy:state.currentUser?.id||'admin'};
+  const teamId = state.currentTeamId;
+  if (!canEditTeam(teamId)) { showToast('Yalnızca kendi takımınızın görevlerini düzenleyebilirsiniz.','error'); return; }
+  const assigneeIds = getCheckedAssignees();
+  const status = document.getElementById('task-status').value;
+  const base = {title, description:document.getElementById('task-desc').value.trim(), assigneeIds:assigneeIds.length?assigneeIds:null, assigneeId:null,
+    priority:document.getElementById('task-priority').value, deadline:document.getElementById('task-deadline').value||null,
+    notifyTeams:state.editingNotifyTeams.length?state.editingNotifyTeams:null};
   try {
     const editId = document.getElementById('task-id-edit').value;
-    if (editId) { await updateTask(state.currentTeamId,editId,task); showToast('Görev güncellendi!','success'); }
-    else { await createTask(state.currentTeamId,task); showToast('Görev oluşturuldu!','success'); }
+    if (editId) {
+      const old = getTask(teamId, editId) || {};
+      const prev = taskAssignees(old);
+      if (status==='done' && old.status!=='done') {
+        await updateTask(teamId, editId, base);
+        await completeTask(teamId, editId, {...old, ...base});
+      } else {
+        await updateTask(teamId, editId, {...base, status, ...(status!=='done'?{completedAt:null}:{})});
+      }
+      for (const mid of assigneeIds) if (!prev.includes(mid) && mid!==state.currentUser?.id)
+        await createNotification({targetMemberId:mid, targetTeamId:teamId, message:'"'+title+'" görevi sana atandı!', type:'task_assigned', relatedTaskId:editId, relatedTeamId:teamId});
+      showToast('Görev güncellendi!','success');
+    } else {
+      await createTask(teamId, {...base, status, createdBy:state.currentUser?.id||'admin'});
+      showToast('Görev oluşturuldu!','success');
+    }
     closeModal('modal-task');
   } catch(e) { showToast('Hata: '+friendlyErr(e),'error'); }
 }
 
 // MODAL: DETAIL
 function openDetailModal(teamId, taskId) {
-  const task = state.teams[teamId]&&state.teams[teamId].tasks&&state.teams[teamId].tasks[taskId];
-  if (!task) return;
+  if (!getTask(teamId, taskId)) return;
   state.currentDetailTaskId=taskId; state.currentDetailTeamId=teamId;
+  document.getElementById('task-file-input').value='';
+  setProgress('taskfile', null);
+  renderDetail();
+  openModal('modal-detail');
+}
+// Veri değişince (ör. durum veya belge eklendi) açık detay penceresini tazele
+function refreshDetailModal() {
+  if (document.getElementById('modal-detail').classList.contains('hidden')) return;
+  if (!getTask(state.currentDetailTeamId, state.currentDetailTaskId)) { closeModal('modal-detail'); return; }
+  renderDetail();
+}
+function renderDetail() {
+  const teamId = state.currentDetailTeamId, taskId = state.currentDetailTaskId;
+  const task = getTask(teamId, taskId); if (!task) return;
   const team=state.teams[teamId];
-  const tc=team&&team.color?team.color:'#3b82f6';
-  const aName=task.assigneeId?getMemberName(teamId,task.assigneeId):null;
+  const editable = canEditTeam(teamId);
+  const names = assigneeNames(teamId, task);
   const today=new Date().toISOString().split('T')[0];
   const isOverdue=task.deadline&&task.deadline<today&&task.status!=='done';
   document.getElementById('detail-title').textContent=task.title;
-  const sL={todo:'Yapılacak',inprogress:'Devam Ediyor',done:'Tamamlandı',blocked:'Bekliyor'};
   const sC={todo:'status-todo',inprogress:'status-inprogress',done:'status-done',blocked:'status-blocked'};
   const pL={low:'🟢 Düşük',medium:'🟡 Orta',high:'🟠 Yüksek',critical:'🔴 Kritik'};
   document.getElementById('detail-badges').innerHTML=
-    '<span class="text-xs font-semibold px-2.5 py-1 rounded-full '+(sC[task.status]||'status-todo')+'">'+(sL[task.status]||task.status)+'</span>'
+    '<span class="text-xs font-semibold px-2.5 py-1 rounded-full '+(sC[task.status]||'status-todo')+'">'+(STATUS_L[task.status]||task.status)+'</span>'
     +'<span class="text-xs font-semibold px-2.5 py-1 rounded-full priority-'+task.priority+'">'+(pL[task.priority]||task.priority)+'</span>'
     +(isOverdue?'<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-600 blink">⏰ Gecikti!</span>':'');
   document.getElementById('detail-desc').textContent=task.description||'Açıklama eklenmemiş.';
   let meta='';
-  if (aName) meta+='<div class="flex gap-2"><span class="text-slate-400 w-28 text-xs">Atanan:</span><span class="font-medium text-sm">'+escHtml(aName)+'</span></div>';
-  if (task.deadline) meta+='<div class="flex gap-2"><span class="text-slate-400 w-28 text-xs">Son Tarih:</span><span class="font-medium text-sm '+(isOverdue?'text-red-500':'')+'">'+formatDate(task.deadline)+'</span></div>';
-  if (task.completedAt) meta+='<div class="flex gap-2"><span class="text-slate-400 w-28 text-xs">Tamamlandı:</span><span class="font-medium text-sm text-green-600">'+formatDatetime(task.completedAt)+'</span></div>';
-  meta+='<div class="flex gap-2"><span class="text-slate-400 w-28 text-xs">Takım:</span><span class="font-medium text-sm">'+escHtml(team&&team.name||'')+'</span></div>';
+  meta+='<div class="flex gap-2"><span class="text-slate-400 w-28 text-xs flex-shrink-0">Atananlar:</span><span class="font-medium text-sm">'+(names.length?names.map(escHtml).join(', '):'<span class="text-slate-400 font-normal">Atanmadı</span>')+'</span></div>';
+  if (task.deadline) meta+='<div class="flex gap-2"><span class="text-slate-400 w-28 text-xs flex-shrink-0">Son Tarih:</span><span class="font-medium text-sm '+(isOverdue?'text-red-500':'')+'">'+formatDate(task.deadline)+'</span></div>';
+  if (task.completedAt && task.status==='done') meta+='<div class="flex gap-2"><span class="text-slate-400 w-28 text-xs flex-shrink-0">Tamamlandı:</span><span class="font-medium text-sm text-green-600">'+formatDatetime(task.completedAt)+'</span></div>';
+  if (task.createdBy) meta+='<div class="flex gap-2"><span class="text-slate-400 w-28 text-xs flex-shrink-0">Oluşturan:</span><span class="font-medium text-sm">'+escHtml(task.createdBy==='admin'?'Danışman':getMemberName(teamId,task.createdBy))+'</span></div>';
+  meta+='<div class="flex gap-2"><span class="text-slate-400 w-28 text-xs flex-shrink-0">Takım:</span><span class="font-medium text-sm">'+escHtml(team&&team.name||'')+'</span></div>';
   document.getElementById('detail-meta').innerHTML=meta;
-  const deps=task.dependsOn?(Array.isArray(task.dependsOn)?task.dependsOn:Object.values(task.dependsOn)):[];
-  if (deps.length) {
+
+  // Durum değiştirme: 4 durumun her birine doğrudan geçilebilir
+  document.getElementById('detail-status-wrap').classList.toggle('hidden', !editable);
+  if (editable) {
+    const sty = {todo:['fa-circle','border-slate-300 bg-slate-100 text-slate-700'], inprogress:['fa-spinner','border-blue-400 bg-blue-50 text-blue-700'], blocked:['fa-pause','border-orange-400 bg-orange-50 text-orange-700'], done:['fa-check','border-green-500 bg-green-50 text-green-700']};
+    document.getElementById('detail-status').innerHTML = ['todo','inprogress','blocked','done'].map(st => {
+      const on = task.status===st || (!STATUS_L[task.status] && st==='todo');
+      return '<button onclick="detailSetStatus(\''+st+'\')" class="text-xs font-semibold px-2 py-2 rounded-lg border-2 transition '+(on?sty[st][1]:'border-slate-100 text-slate-500 hover:bg-slate-50')+'"><i class="fas '+sty[st][0]+' mr-1"></i>'+STATUS_L[st]+'</button>';
+    }).join('');
+  }
+
+  // Belgeler
+  const files = asList(task.attachments).sort((a,b)=>(a.at||0)-(b.at||0));
+  document.getElementById('detail-files-wrap').classList.toggle('hidden', !editable && !files.length);
+  document.getElementById('task-file-btn').classList.toggle('hidden', !editable);
+  document.getElementById('detail-files-list').innerHTML = files.length ? files.map(f => {
+    const canDel = state.isAdmin || f.by===state.currentUser?.id;
+    const viewable = TASK_VIEWABLE.includes(fileExt(f.fileName));
+    return '<div class="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">'
+      +'<i class="fas '+anyFileIcon(f.fileName)+' text-lg flex-shrink-0"></i>'
+      +'<div class="flex-1 min-w-0"><div class="text-xs font-medium text-slate-700 truncate" title="'+escHtml(f.fileName)+'">'+escHtml(f.fileName)+'</div>'
+      +'<div class="text-[11px] text-slate-400">'+formatSize(f.fileSize)+' · '+escHtml(f.byName||'')+' · '+formatDatetime(f.at)+'</div></div>'
+      +(viewable?'<button onclick="downloadTaskFile(\''+teamId+'\',\''+f.fileId+'\',\'view\')" title="Görüntüle" class="text-slate-500 hover:text-blue-600 px-1.5"><i class="fas fa-eye"></i></button>':'')
+      +'<button onclick="downloadTaskFile(\''+teamId+'\',\''+f.fileId+'\',\'download\')" title="İndir" class="text-slate-500 hover:text-blue-600 px-1.5"><i class="fas fa-download"></i></button>'
+      +(canDel?'<button onclick="removeTaskFile(\''+teamId+'\',\''+taskId+'\',\''+f.fileId+'\')" title="Sil" class="text-slate-400 hover:text-red-500 px-1.5"><i class="fas fa-trash"></i></button>':'')
+      +'</div>';
+  }).join('') : '<p class="text-xs text-slate-400">Henüz belge eklenmedi.</p>';
+
+  const nts = asList(task.notifyTeams), deps = asList(task.dependsOn);
+  if (nts.length || deps.length) {
     document.getElementById('detail-deps').classList.remove('hidden');
-    document.getElementById('detail-deps-list').innerHTML=deps.map(d=>'<div class="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1"><i class="fas fa-link mr-1"></i>'+escHtml(d.teamName)+' → <strong>'+escHtml(d.taskTitle)+'</strong></div>').join('');
+    document.getElementById('detail-deps-list').innerHTML =
+      nts.map(d=>'<div class="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1"><i class="fas fa-bell mr-1"></i>'+escHtml(d.teamName)+'</div>').join('')
+      + deps.map(d=>'<div class="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1"><i class="fas fa-link mr-1"></i>'+escHtml(d.teamName)+' → <strong>'+escHtml(d.taskTitle)+'</strong></div>').join('');
   } else document.getElementById('detail-deps').classList.add('hidden');
-  const history=task.passHistory?(Array.isArray(task.passHistory)?task.passHistory:Object.values(task.passHistory)):[];
+  const history=asList(task.passHistory);
   if (history.length) {
     document.getElementById('detail-history').classList.remove('hidden');
     document.getElementById('detail-history-list').innerHTML=history.map(h=>'<div class="text-xs bg-slate-50 rounded-lg px-3 py-2"><span class="font-medium">'+escHtml(h.fromName||'?')+'</span><span class="text-slate-400"> → </span><span class="font-medium">'+escHtml(h.toName||'?')+'</span>'+(h.note?'<span class="text-slate-400"> — "'+escHtml(h.note)+'"</span>':'')+'<div class="text-slate-300 mt-0.5">'+formatDatetime(h.at)+'</div></div>').join('');
   } else document.getElementById('detail-history').classList.add('hidden');
+
   let actions='';
-  if (task.status!=='done') {
-    actions+='<button onclick="quickCompleteTask(\''+teamId+'\',\''+taskId+'\')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"><i class="fas fa-check mr-1"></i> Tamamla</button>';
+  if (editable && task.status!=='done')
     actions+='<button onclick="openPassModal(\''+teamId+'\',\''+taskId+'\')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"><i class="fas fa-share mr-1"></i> Pasla</button>';
-  }
-  if (state.isAdmin) {
-    actions+='<button onclick="openEditTaskModal(\''+teamId+'\',\''+taskId+'\')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold px-4 py-2 rounded-lg transition"><i class="fas fa-pen"></i></button>';
-    actions+='<button onclick="deleteTask(\''+teamId+'\',\''+taskId+'\')" class="bg-red-50 hover:bg-red-100 text-red-500 text-sm font-semibold px-4 py-2 rounded-lg transition"><i class="fas fa-trash"></i></button>';
-  }
-  document.getElementById('detail-actions').innerHTML=actions;
-  openModal('modal-detail');
+  if (editable)
+    actions+='<button onclick="openEditTaskModal(\''+teamId+'\',\''+taskId+'\')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold px-4 py-2 rounded-lg transition"><i class="fas fa-pen mr-1"></i> Düzenle</button>';
+  if (canDeleteTask(task))
+    actions+='<button onclick="deleteTask(\''+teamId+'\',\''+taskId+'\')" class="bg-red-50 hover:bg-red-100 text-red-500 text-sm font-semibold px-4 py-2 rounded-lg transition"><i class="fas fa-trash mr-1"></i> Sil</button>';
+  document.getElementById('detail-actions').innerHTML=actions || '<p class="text-xs text-slate-400">Bu görev için işlem yetkiniz yok.</p>';
 }
-async function quickCompleteTask(teamId,taskId) { closeModal('modal-detail'); await completeTask(teamId,taskId); showToast('Görev tamamlandı! 🎉','success'); }
+async function detailSetStatus(st) {
+  try { await setTaskStatus(state.currentDetailTeamId, state.currentDetailTaskId, st); }
+  catch(e) { showToast('Durum değiştirilemedi: '+friendlyErr(e),'error'); }
+}
 async function deleteTask(teamId,taskId) {
-  if (!confirm('Bu görevi silmek istediğinize emin misiniz?')) return;
+  const task = getTask(teamId, taskId); if (!task) return;
+  if (!canDeleteTask(task)) { showToast('Görevi yalnızca oluşturan kişi veya danışman silebilir.','error'); return; }
+  const files = asList(task.attachments);
+  if (!confirm('"'+task.title+'" görevi'+(files.length?' ve '+files.length+' belgesi':'')+' silinsin mi? Bu işlem geri alınamaz.')) return;
   try { await state.db.ref('clubs/'+state.clubCode+'/teams/'+teamId+'/tasks/'+taskId).remove(); }
   catch(e) { showToast('Silinemedi: '+friendlyErr(e),'error'); return; }
+  for (const f of files) await dbRef(taskFilePath(teamId, f.fileId)).remove().catch(()=>{});
   closeModal('modal-detail'); showToast('Görev silindi.','info');
+}
+
+// GÖREV BELGELERİ — reportFiles ile aynı yöntem: Realtime Database'de parça parça
+//   taskFiles/KOD/TAKIM_ID/DOSYA_ID/{meta, chunks/0..n}
+//   Görev kaydında: tasks/GÖREV_ID/attachments/DOSYA_ID
+const TASK_FILE_EXTS = ['pdf','doc','docx','xls','xlsx','ppt','pptx','odt','ods','odp','txt','csv','rtf','md',
+  'png','jpg','jpeg','gif','webp','svg','bmp','zip','rar','7z',
+  'dwg','dxf','step','stp','stl','iges','igs','sldprt','sldasm','slddrw','f3d','ipt','iam','obj','3mf',
+  'ino','py','c','cpp','h','m','json','xml'];
+const TASK_VIEWABLE = ['pdf','png','jpg','jpeg','gif','webp','txt'];
+const TASK_MIME = {pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',svg:'image/svg+xml',bmp:'image/bmp',txt:'text/plain;charset=utf-8',csv:'text/csv',
+  doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt:'application/vnd.ms-powerpoint',pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation',zip:'application/zip'};
+function taskFilePath(teamId, fileId) { return 'taskFiles/'+state.clubCode+'/'+teamId+'/'+fileId; }
+function anyFileIcon(name) {
+  const e = fileExt(name);
+  if (e==='pdf') return 'fa-file-pdf text-red-500';
+  if (['doc','docx','odt','rtf'].includes(e)) return 'fa-file-word text-blue-600';
+  if (['xls','xlsx','ods','csv'].includes(e)) return 'fa-file-excel text-green-600';
+  if (['ppt','pptx','odp'].includes(e)) return 'fa-file-powerpoint text-orange-500';
+  if (['png','jpg','jpeg','gif','webp','svg','bmp'].includes(e)) return 'fa-file-image text-purple-500';
+  if (['zip','rar','7z'].includes(e)) return 'fa-file-zipper text-amber-600';
+  if (['dwg','dxf','step','stp','stl','iges','igs','sldprt','sldasm','slddrw','f3d','ipt','iam','obj','3mf'].includes(e)) return 'fa-cube text-cyan-600';
+  if (['ino','py','c','cpp','h','m','json','xml','md'].includes(e)) return 'fa-file-code text-slate-600';
+  return 'fa-file text-slate-400';
+}
+function validateTaskFile(f) {
+  if (!f) return 'Lütfen bir dosya seçin.';
+  if (!TASK_FILE_EXTS.includes(fileExt(f.name))) return 'Bu dosya türü desteklenmiyor (.'+(fileExt(f.name)||'?')+'). Gerekirse ZIP olarak sıkıştırıp yükleyin.';
+  if (!f.size) return 'Dosya boş görünüyor.';
+  if (f.size > REPORT_MAX_BYTES) return 'Dosya 10 MB\'tan büyük olamaz ('+formatSize(f.size)+').';
+  return null;
+}
+document.getElementById('task-file-input').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  const teamId = state.currentDetailTeamId, taskId = state.currentDetailTaskId;
+  const err = validateTaskFile(f); if (err) { showToast(err,'error'); return; }
+  if (!canEditTeam(teamId)) { showToast('Yalnızca kendi takımınızın görevlerine belge ekleyebilirsiniz.','error'); return; }
+  const btn = document.getElementById('task-file-btn'); btn.classList.add('pointer-events-none','opacity-50');
+  let up = null;
+  try {
+    setProgress('taskfile', 0);
+    const me = state.currentUser;
+    up = await uploadChunked('taskFiles/'+state.clubCode+'/'+teamId, f, TASK_MIME[fileExt(f.name)]||'application/octet-stream', {by:me.id, taskId}, p=>setProgress('taskfile', p));
+    await dbSet('clubs/'+state.clubCode+'/teams/'+teamId+'/tasks/'+taskId+'/attachments/'+up.fileId, {...up, by:me.id, byName:me.name, at:Date.now()});
+    up = null;
+    showToast('"'+f.name+'" yüklendi.','success');
+  } catch(ex) {
+    console.error(ex);
+    if (up) await dbRef(taskFilePath(teamId, up.fileId)).remove().catch(()=>{});
+    showToast('Yüklenemedi: '+friendlyErr(ex),'error');
+  } finally { setProgress('taskfile', null); btn.classList.remove('pointer-events-none','opacity-50'); }
+});
+async function downloadTaskFile(teamId, fileId, mode) {
+  const task = getTask(state.currentDetailTeamId, state.currentDetailTaskId);
+  const att = task && task.attachments && task.attachments[fileId];
+  await downloadFileAt(taskFilePath(teamId, fileId), mode, att ? att.fileName : null);
+}
+async function removeTaskFile(teamId, taskId, fileId) {
+  const task = getTask(teamId, taskId); const att = task && task.attachments && task.attachments[fileId]; if (!att) return;
+  if (!confirm('"'+att.fileName+'" belgesi silinsin mi?')) return;
+  try {
+    await dbRef(taskFilePath(teamId, fileId)).remove();
+    await dbRef('clubs/'+state.clubCode+'/teams/'+teamId+'/tasks/'+taskId+'/attachments/'+fileId).remove();
+    showToast('Belge silindi.','info');
+  } catch(e) { showToast('Silinemedi: '+friendlyErr(e),'error'); }
 }
 
 // MODAL: PASS
 function openPassModal(teamId, taskId) {
-  const task=state.teams[teamId]&&state.teams[teamId].tasks&&state.teams[teamId].tasks[taskId];
+  const task=getTask(teamId, taskId);
   if (!task) return;
+  const cur = taskAssignees(task);
   document.getElementById('pass-task-id').value=taskId;
   document.getElementById('pass-team-id').value=teamId;
   document.getElementById('pass-note').value='';
+  const fromSel=document.getElementById('pass-from');
+  fromSel.innerHTML='';
+  cur.forEach(id=>{const o=document.createElement('option');o.value=id;o.textContent=getMemberName(teamId,id);fromSel.appendChild(o);});
+  if (state.currentUser && cur.includes(state.currentUser.id)) fromSel.value=state.currentUser.id;
+  document.getElementById('pass-from-wrap').classList.toggle('hidden', cur.length<2);
   const sel=document.getElementById('pass-to');
   sel.innerHTML='<option value="">Kişi seçin...</option>';
-  getTeamMembers(teamId).forEach(m=>{if(m.id!==task.assigneeId){const o=document.createElement('option');o.value=m.id;o.textContent=m.name+' ('+m.role+')';sel.appendChild(o);}});
+  getTeamMembers(teamId).forEach(m=>{if(!cur.includes(m.id)){const o=document.createElement('option');o.value=m.id;o.textContent=m.name+' ('+m.role+')';sel.appendChild(o);}});
   closeModal('modal-detail'); openModal('modal-pass');
 }
 async function submitPass() {
   const taskId=document.getElementById('pass-task-id').value;
   const teamId=document.getElementById('pass-team-id').value;
   const toId=document.getElementById('pass-to').value;
+  const fromId=document.getElementById('pass-from').value||null;
   const note=document.getElementById('pass-note').value.trim();
   if (!toId) { showToast('Lütfen kişi seçin.','error'); return; }
-  try { await passTask(teamId,taskId,toId,note); closeModal('modal-pass'); showToast('Görev devredildi! Bildirim gönderildi.','success'); }
+  try { await passTask(teamId,taskId,fromId,toId,note); closeModal('modal-pass'); showToast('Görev devredildi! Bildirim gönderildi.','success'); }
   catch(e) { showToast('Hata: '+friendlyErr(e),'error'); }
 }
 
@@ -1308,15 +1539,15 @@ function asciiFileName(s) {
 }
 function filePath(memberId, fileId) { return 'reportFiles/'+state.clubCode+'/'+memberId+'/'+fileId; }
 
-async function uploadFileChunked(memberId, file, by, onProgress) {
+// Dosyayı parçalara bölüp basePath/DOSYA_ID altına yazar
+async function uploadChunked(basePath, file, type, metaExtra, onProgress) {
   await state.authReady;
-  const fileId = dbRef('reportFiles/'+state.clubCode+'/'+memberId).push().key;
-  const base = filePath(memberId, fileId);
+  const fileId = dbRef(basePath).push().key;
+  const base = basePath+'/'+fileId;
   const bytes = new Uint8Array(await file.arrayBuffer());
   const n = Math.max(1, Math.ceil(bytes.length/REPORT_CHUNK));
-  const type = REPORT_EXTS[fileExt(file.name)] || file.type || 'application/octet-stream';
   try {
-    await dbSet(base+'/meta', {name:file.name, type, size:file.size, chunks:n, by, complete:false, at:Date.now()});
+    await dbSet(base+'/meta', {name:file.name, type, size:file.size, chunks:n, ...metaExtra, complete:false, at:Date.now()});
     for (let i=0;i<n;i++) {
       await dbSet(base+'/chunks/'+i, bytesToB64(bytes.subarray(i*REPORT_CHUNK,(i+1)*REPORT_CHUNK)));
       if (onProgress) onProgress((i+1)/n);
@@ -1325,8 +1556,11 @@ async function uploadFileChunked(memberId, file, by, onProgress) {
   } catch(e) { try { await dbRef(base).remove(); } catch(_){} throw e; }
   return {fileId, fileName:file.name, fileType:type, fileSize:file.size};
 }
-async function fetchFileBlob(memberId, fileId) {
-  const base = filePath(memberId, fileId);
+async function uploadFileChunked(memberId, file, by, onProgress) {
+  const type = REPORT_EXTS[fileExt(file.name)] || file.type || 'application/octet-stream';
+  return uploadChunked('reportFiles/'+state.clubCode+'/'+memberId, file, type, {by}, onProgress);
+}
+async function fetchFileBlobAt(base) {
   const meta = await dbGet(base+'/meta');
   if (!meta) throw new Error('Dosya bulunamadı.');
   if (!meta.complete) throw new Error('Dosya yüklemesi tamamlanmamış.');
@@ -1335,22 +1569,27 @@ async function fetchFileBlob(memberId, fileId) {
   for (let i=0;i<meta.chunks;i++) { if (chunks[i]==null) throw new Error('Dosya eksik.'); parts.push(b64ToBytes(chunks[i])); }
   return {blob:new Blob(parts,{type:meta.type||'application/octet-stream'}), meta};
 }
-async function downloadReportFile(memberId, fileId, mode, ownerName) {
+async function downloadFileAt(base, mode, downloadName) {
   // Açılır pencere engelini aşmak için pencereyi tıklama anında açıyoruz
   const win = mode==='view' ? window.open('', '_blank') : null;
   if (win) win.document.write('<p style="font-family:sans-serif;padding:2rem">Dosya hazırlanıyor...</p>');
   else showToast('Dosya hazırlanıyor...','info');
   try {
-    const {blob, meta} = await fetchFileBlob(memberId, fileId);
+    const {blob, meta} = await fetchFileBlobAt(base);
     const url = URL.createObjectURL(blob);
     if (win) { win.location.href = url; }
     else {
       const a = document.createElement('a'); a.href = url;
-      a.download = asciiFileName((ownerName ? safeFileName(ownerName)+'_' : '') + (meta.name||'rapor'));
+      a.download = asciiFileName(downloadName || meta.name || 'dosya');
       document.body.appendChild(a); a.click(); a.remove();
     }
     setTimeout(()=>URL.revokeObjectURL(url), 120000);
   } catch(e) { if (win) win.close(); showToast('Dosya açılamadı: '+friendlyErr(e),'error'); }
+}
+async function downloadReportFile(memberId, fileId, mode, ownerName) {
+  const meta = mode==='view' ? null : await dbGet(filePath(memberId, fileId)+'/meta').catch(()=>null);
+  const name = meta ? ((ownerName ? safeFileName(ownerName)+'_' : '') + (meta.name||'rapor')) : null;
+  await downloadFileAt(filePath(memberId, fileId), mode, name);
 }
 
 function reportStatus(memberId, reportId) {
@@ -1714,6 +1953,7 @@ window.addEventListener('load', () => {
             showToast('Yeni sürüm: lütfen bir kişisel şifre belirleyerek tekrar giriş yapın.','info');
             return;
           }
+          await bindUidToMember(s.clubCode, s.currentUser.id);
         }
         Object.assign(state,s); startApp();
       }).catch(() => showScreen('screen-login'));

@@ -4,7 +4,7 @@ Bu kurulum **bir kez** yapılır. Öğrencilerin hiçbir ayar yapmasına gerek k
 
 > **Firebase projeniz zaten varsa** 1. ve 3. adımları atlayın. 2, 4, 5 ve 6. adımları mutlaka yapın.
 >
-> **v1.1'den v1.2'ye (rapor modülü) geçiyorsanız** yalnızca **5. adımı** (kuralları yeniden yükleme) yapın ve aşağıdaki [v1.2 güncelleme notları](#-v12-güncelleme-notları-rapor-modülü) bölümünü okuyun.
+> **v1.2'den v1.3'e geçiyorsanız:** **5. adımı** (kuralları yeniden yükleme) yapın, ardından **bir kez danışman olarak giriş yapın**. Ayrıntılar: [v1.3 güncelleme notları](#-v13-güncelleme-notları-takım-gizliliği-çoklu-atama-belgeler).
 
 ---
 
@@ -67,6 +67,20 @@ Ardından **Takım Oluştur** ile takımları kurun ve öğrencilere kulüp kodu
 
 ---
 
+## 🔒 v1.3 güncelleme notları (takım gizliliği, çoklu atama, belgeler)
+
+1. **Kuralları yeniden yükleyin** (5. adım). Yeni kurallar `uidMember`, `teamList` ve `taskFiles` bölümlerini ekler ve takımları birbirinden ayırır.
+2. **Hemen ardından bir kez danışman olarak giriş yapın.** Uygulama, öğrencilerin giriş ekranında gördüğü takım listesini (`teamList`) bu girişte oluşturur. Bu yapılmazsa öğrenciler takım listesinde *"Takım bulunamadı"* görür.
+3. Öğrencilerin bir şey yapmasına gerek yok. Açık oturumlar sayfa yenilenince yeni kurallarla çalışır.
+
+Yenilikler:
+- **Takım gizliliği:** Öğrenci yalnızca kendi takımının görevlerini görür ve yalnızca kendi takımına görev ekleyebilir. Bu, Firebase kurallarıyla da zorunlu tutulur. Başka takım yalnızca adıyla, "bitince bildirim gönder" listesinde görünür.
+- **Çoklu atama:** Bir göreve birden fazla kişi atanabilir. Eski tek kişilik görevler olduğu gibi çalışır.
+- **Durum değiştirme:** Görev detayında 4 durum düğmesi (Yapılacak / Devam Ediyor / Beklemede / Tamamlandı) ve bilgisayarda kartı sütunlar arasında sürükle-bırak.
+- **Görev belgeleri:** Her göreve PDF, Word, Excel, PowerPoint, resim, CAD (DWG, DXF, STEP, STL, SolidWorks), ZIP gibi dosyalar eklenebilir (en fazla 10 MB). Belgeyi takım üyeleri ve danışman görür; yalnızca yükleyen kişi ve danışman siler.
+- **Görev silme:** Görevi oluşturan öğrenci ve danışman silebilir. Görev silinince belgeleri de silinir.
+- **"Bu görev bitince bildirim gönder":** Artık doğrudan takım seçilir. Görev tamamlanınca seçilen takımın tüm üyelerine bildirim gider.
+
 ## 📄 v1.2 güncelleme notları (rapor modülü)
 
 - **Kuralları yeniden yükleyin** (5. adım). Yeni kurallar `memberSecrets`, `reportFiles`, `memberUids`, `reports` ve `feedback` bölümlerini ekler.
@@ -88,12 +102,13 @@ Ardından **Takım Oluştur** ile takımları kurun ve öğrencilere kulüp kodu
 
 | İşlem | Danışman | Öğrenci |
 |---|:---:|:---:|
-| Tüm takımları ve görevleri görme | ✅ | ✅ (uygulamada yalnızca kendi takımı gösterilir) |
+| Takımları ve görevleri görme | ✅ (tümü) | Yalnızca kendi takımı |
 | Takım oluşturma | ✅ | ❌ |
 | Takıma üye ekleme | ✅ | Yalnızca kendini (katılırken) |
-| Görev ekleme / tamamlama / paslama | ✅ | ✅ |
-| Görev düzenleme ekranı | ✅ | ❌ |
-| Görev silme | ✅ | ❌ |
+| Görev ekleme / düzenleme / durum değiştirme / paslama | ✅ | Yalnızca kendi takımında |
+| Görev silme | ✅ | Yalnızca kendi oluşturduğu görev |
+| Göreve belge ekleme / indirme | ✅ | Yalnızca kendi takımında |
+| Görev belgesini silme | ✅ | Yalnızca kendi yüklediği belge |
 | Rapor gönderme | — | ✅ (yalnızca kendi adına) |
 | Raporları görme / indirme | ✅ (tümü) | Yalnızca kendi raporları |
 | Geri bildirim yazma / dosya ekleme | ✅ | ❌ |
@@ -110,7 +125,7 @@ Firebase Console → Realtime Database → Data → `clubSecrets/KULUP_KODU` dü
 Uygulamada takımı açın → **Üyeler** → öğrencinin yanında **Şifre sıfırla**. Öğrenci bir sonraki girişinde yeni şifre belirler. Raporları silinmez.
 
 **Bir öğrenci "Bu işlem için yetkiniz yok" hatası alıyor.**
-Görev silmek gibi danışmana ait bir işlem deniyordur. Bu beklenen bir davranış. Rapor gönderirken bu hata çıkıyorsa güncel `database.rules.json` yüklenmemiştir (5. adım).
+Başka takımın görevine dokunmaya ya da başkasının oluşturduğu görevi silmeye çalışıyordur. Bu beklenen bir davranış. Kendi takımında bile bu hatayı alıyorsa sayfayı yenileyip tekrar giriş yapsın. Rapor gönderirken bu hata çıkıyorsa güncel `database.rules.json` yüklenmemiştir (5. adım).
 
 **Uygulama "Anonim giriş kapalı" diyor.**
 2. adım yapılmamış. Authentication → Sign-in method → Anonymous'u açın.
@@ -120,4 +135,4 @@ Spark planında 1 GB depolama, aylık 10 GB indirme ve 100 eş zamanlı bağlant
 
 ---
 
-*JellyFish v1.2 — Kulüp Görev Yönetimi ve Rapor Takibi*
+*JellyFish v1.3 — Kulüp Görev Yönetimi ve Rapor Takibi*
